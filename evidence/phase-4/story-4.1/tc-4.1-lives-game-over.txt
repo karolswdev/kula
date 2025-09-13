@@ -1,0 +1,28 @@
+TC-4.1: Lives System and Game Over Test
+========================================
+
+Test Method: GameState_OnLifeLost_DecrementsLivesAndTriggersGameOver()
+Requirement: PROD-008 - Lives System
+
+Test Execution:
+---------------
+1. Initial state: lives: 1
+2. Player falls off platform
+3. Life lost event triggered
+4. Lives decremented: lives: 0
+5. Game over state triggered: GAME OVER
+
+Console Logs Captured:
+---------------------
+GameState::loseLife - Life lost due to: fall. Lives before: 1
+GameState::loseLife - Lives remaining: 0
+GameState::triggerGameOver - GAME OVER!
+Final Score: 0, Level: Gravity Discovery
+
+Test Result: PASSED ✓
+
+Evidence:
+- GameState manager correctly tracks lives
+- Life loss properly decrements counter
+- Game over triggers at 0 lives
+- Events dispatched for UI updates

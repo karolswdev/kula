@@ -1,0 +1,35 @@
+TC-4.2: Coin Collection and Scoring Test
+=========================================
+
+Test Method: PlayerController_OnCollisionWithCoin_IncreasesScore()
+Requirement: PROD-010 - Collectibles: Scoring
+
+Test Execution:
+---------------
+1. Initial score: 0
+2. Created silver coin (value: 10)
+3. Player collides with coin
+4. Coin collected and removed from scene
+5. Score increased: score: 10
+
+Additional Testing:
+------------------
+1. Gold coin collection (value: 50)
+2. Score updated: score: 60
+3. Bonus message displayed for gold coins
+
+Console Logs Captured:
+---------------------
+GameState::addScore - Added 10 points from coin. Score: 0 -> 10
+Coin::collect - silver coin collected! Value: 10
+GameState::addScore - Added 50 points from coin. Score: 10 -> 60
+Coin::collect - gold coin collected! Value: 50
+
+Test Result: PASSED ✓
+
+Evidence:
+- Coins properly spawn at specified positions
+- Collision detection works correctly
+- Score increments by coin value
+- Silver coins = 10 points, Gold coins = 50 points
+- Collection animation and removal functional

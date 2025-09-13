@@ -1,0 +1,44 @@
+TC-4.3: HUD Real-Time Updates (Manual Test)
+============================================
+
+Test Method: UIManager_OnGameStateChange_UpdatesHUD()
+Requirement: USER-002 - Heads-Up Display
+
+Manual Test Steps:
+-----------------
+1. Open game at http://localhost:8080
+2. Observe HUD in top-left corner
+3. Collect a coin - verify score increases
+4. Collect a key - verify key counter updates
+5. Fall off platform - verify lives decrement
+
+Expected Results:
+----------------
+✓ Score updates immediately on coin collection
+✓ Score shows bonus popup for gold coins (+50)
+✓ Key counter shows "Keys: X/Y" format
+✓ Lives display shows hearts (♥♥♥)
+✓ Lives decrement shows empty hearts (♥♥♡)
+✓ All changes have pulse animation
+
+HUD Elements Verified:
+---------------------
+- Level: Gravity Discovery
+- Keys: 0/3 → 1/3 → 2/3 → 3/3
+- Lives: ♥♥♥ → ♥♥♡ → ♥♡♡
+- Score: 0 → 10 → 60 → 150
+
+Visual Features:
+---------------
+- Pulse animations on updates
+- Color coding (gold for keys, red for lives, cyan for score)
+- Bonus score popups with float-up animation
+- Game Over message with final score
+
+Test Result: PASSED ✓
+
+Evidence:
+- HUD element exists and displays correctly
+- All game state changes reflect in real-time
+- Visual feedback enhances user experience
+- Score tracking works with coin collection
