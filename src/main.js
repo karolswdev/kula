@@ -21,5 +21,8 @@ window.addEventListener('DOMContentLoaded', () => {
     game.initialize();
     game.start();
     
+    // Expose game instance globally for testing
+    window.game = game;
+    
     console.log('Kula Browser - Game started successfully');
 });

@@ -6,7 +6,9 @@
   "scripts": {
     "start": "npx http-server . -p 8081 -c-1",
     "build": "echo 'Build task placeholder'",
-    "test": "echo 'Test task placeholder'",
+    "test": "playwright test",
+    "test:ui": "playwright test --ui",
+    "test:debug": "playwright test --debug",
     "lint": "eslint src/",
     "format": "prettier --write src/"
   },
@@ -19,12 +21,15 @@
   "author": "",
   "license": "MIT",
   "dependencies": {
-    "three": "^0.160.0",
-    "cannon-es": "^0.20.0"
+    "cannon-es": "^0.20.0",
+    "three": "^0.160.0"
   },
   "devDependencies": {
+    "@playwright/test": "^1.55.0",
     "eslint": "^8.56.0",
+    "http-server": "^14.1.1",
+    "playwright": "^1.55.0",
     "prettier": "^3.1.1",
-    "http-server": "^14.1.1"
+    "puppeteer": "^24.20.0"
   }
 }

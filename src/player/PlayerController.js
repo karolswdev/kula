@@ -15,9 +15,9 @@ export class PlayerController {
         };
         
         // Physics parameters - Requirement: NFR-002 (Control Precision)
-        this.moveSpeed = 10.0; // Maximum rolling speed
-        this.acceleration = 20.0; // How quickly we reach max speed
-        this.deceleration = 10.0; // How quickly we slow down
+        this.moveSpeed = 5.0; // Maximum rolling speed (reduced for better control)
+        this.acceleration = 10.0; // How quickly we reach max speed (reduced for better control)
+        this.deceleration = 5.0; // How quickly we slow down (reduced for smoother stops)
         this.jumpImpulse = 8.0; // Vertical impulse for jumping
         
         // Player physics body reference (will be set by PhysicsManager)
@@ -135,7 +135,9 @@ export class PlayerController {
                 0,
                 moveVector.z * this.acceleration
             );
-            this.physicsBody.applyForce(force);
+            // CANNON.js applyForce requires both force vector and world point
+            // Apply force at center of mass (body position)
+            this.physicsBody.applyForce(force, this.physicsBody.position);
             
             // Log position for TC-1.2 test evidence
             if (Math.random() < 0.1) { // Log occasionally to avoid spam
@@ -159,8 +161,9 @@ export class PlayerController {
         }
         
         // Handle jumping - Requirement: PROD-003
-        // Check if on ground (simple check - Y position near 0.5)
-        this.canJump = Math.abs(this.physicsBody.position.y - 0.5) < 0.1;
+        // Check if on ground (check if Y position is near the expected ground level)
+        // Player radius is 0.5, floor is at Y=0, so player center should be at ~0.5 when grounded
+        this.canJump = this.physicsBody.position.y < 0.6 && Math.abs(this.physicsBody.velocity.y) < 0.1;
         
         // Detect new jump press (not held)
         const jumpPressed = this.keys.jump && !this.wasJumpPressed;

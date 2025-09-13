@@ -79,12 +79,21 @@ export class Game {
         this.physicsManager = new PhysicsManager();
         
         // Create physics bodies for level elements
-        const playerPhysicsBody = this.physicsManager.createPlayerBody(
-            new THREE.Vector3(0, 0.5, 0)
-        );
+        // Create floor first so it's in place when player is added
         const floorPhysicsBody = this.physicsManager.createFloorBody(
             new THREE.Vector3(0, 0, 0),
-            new THREE.Vector2(20, 20)
+            new THREE.Vector2(20, 20)  // Match visual floor size
+        );
+        
+        // Create wall physics body - Requirement: PROD-001
+        const wallPhysicsBody = this.physicsManager.createWallBody(
+            new THREE.Vector3(10, 10, 0),  // Match visual wall position
+            new THREE.Vector2(20, 20)  // Wall dimensions
+        );
+        
+        // Create player body starting slightly above the floor
+        const playerPhysicsBody = this.physicsManager.createPlayerBody(
+            new THREE.Vector3(0, 1, 0)  // Start higher to ensure proper collision
         );
         
         // Initialize player controller
@@ -96,13 +105,13 @@ export class Game {
     
     /**
      * Setup the static level with floor, player, and lights
-     * Requirements: TECH-P-002, NFR-003 (Visual Identity)
+     * Requirements: TECH-P-002, NFR-003 (Visual Identity), PROD-001 (Gravity Reorientation)
      */
     setupLevel() {
         console.log('Game::setupLevel - Creating level elements');
         
         // Create floor plane - Requirement: PROD-011 (Modular Blocks)
-        const floorGeometry = new THREE.PlaneGeometry(20, 20);
+        const floorGeometry = new THREE.PlaneGeometry(20, 20); // Smaller floor for testing
         const floorMaterial = new THREE.MeshStandardMaterial({ 
             color: 0x808080, // Gray floor for contrast
             roughness: 0.8,
@@ -116,6 +125,24 @@ export class Game {
         this.scene.add(floor);
         console.log('Game::setupLevel - Floor created at position:', floor.position);
         
+        // Create wall platform perpendicular to floor - Requirement: PROD-001
+        // Wall is positioned at the edge of the floor for testing gravity transitions
+        const wallGeometry = new THREE.PlaneGeometry(20, 20);
+        const wallMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0x606060, // Darker gray for wall
+            roughness: 0.8,
+            metalness: 0.2
+        });
+        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
+        wall.position.x = 10; // Position at right edge of floor
+        wall.position.y = 10; // Center vertically
+        wall.rotation.y = -Math.PI / 2; // Rotate to face left (perpendicular to floor)
+        wall.receiveShadow = true;
+        wall.castShadow = true;
+        wall.name = 'wall';
+        this.scene.add(wall);
+        console.log('Game::setupLevel - Wall created at position:', wall.position);
+        
         // Create player sphere - Requirements: NFR-003 (bright, distinguishable)
         const playerGeometry = new THREE.SphereGeometry(0.5, 32, 16);
         const playerMaterial = new THREE.MeshStandardMaterial({ 
@@ -124,7 +151,7 @@ export class Game {
             metalness: 0.5
         });
         this.playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
-        this.playerMesh.position.set(0, 0.5, 0); // Start at center, half-radius above floor
+        this.playerMesh.position.set(0, 1, 0); // Start at center, above floor to match physics body
         this.playerMesh.castShadow = true;
         this.playerMesh.receiveShadow = true;
         this.playerMesh.name = 'player';
