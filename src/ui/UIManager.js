@@ -1,6 +1,6 @@
 /**
  * UIManager - Manages the game's HUD and UI elements
- * Requirements: USER-002 (Heads-Up Display), PROD-004 (Key Collection), PROD-008 (Lives System)
+ * Requirements: USER-002 (Heads-Up Display), PROD-004 (Key Collection), PROD-008 (Lives System), PROD-010 (Scoring)
  */
 
 export class UIManager {
@@ -112,15 +112,24 @@ export class UIManager {
             this.showMessage('Life Lost!', 1500);
         });
         
+        // Listen for score changes - Requirement: PROD-010
+        window.addEventListener('scoreChanged', (event) => {
+            this.setScore(event.detail.score);
+            // Show bonus message for large scores
+            if (event.detail.delta >= 50) {
+                this.showBonusMessage(`+${event.detail.delta}`, 1000);
+            }
+        });
+        
         // Listen for level complete
         window.addEventListener('levelComplete', (event) => {
             this.showMessage('Level Complete!', 3000);
-            this.updateScore(event.detail.keysCollected * 100);
+            // Score is now handled by GameState
         });
         
         // Listen for game over
         window.addEventListener('gameOver', (event) => {
-            this.showMessage('GAME OVER', 5000);
+            this.showMessage(`GAME OVER\nFinal Score: ${event.detail.finalScore}`, 5000);
         });
     }
     
@@ -172,14 +181,25 @@ export class UIManager {
     }
     
     /**
-     * Update the score display
+     * Update the score display (additive)
      * @param {number} points - Points to add to score
      */
     updateScore(points) {
         if (this.scoreElement) {
             const currentScore = parseInt(this.scoreElement.textContent.replace('Score: ', '')) || 0;
             const newScore = currentScore + points;
-            this.scoreElement.textContent = `Score: ${newScore}`;
+            this.setScore(newScore);
+        }
+    }
+    
+    /**
+     * Set the score display to a specific value
+     * Requirement: PROD-010 - Scoring
+     * @param {number} score - The score value to display
+     */
+    setScore(score) {
+        if (this.scoreElement) {
+            this.scoreElement.textContent = `Score: ${score}`;
             
             // Add score animation
             this.scoreElement.style.animation = 'none';
@@ -187,6 +207,48 @@ export class UIManager {
                 this.scoreElement.style.animation = 'pulse 0.5s ease-in-out';
             }, 10);
         }
+    }
+    
+    /**
+     * Show a bonus score message
+     * @param {string} message - Bonus message to display
+     * @param {number} duration - Duration in milliseconds
+     */
+    showBonusMessage(message, duration = 1000) {
+        // Create a temporary bonus element
+        const bonusElement = document.createElement('div');
+        bonusElement.style.cssText = `
+            position: fixed;
+            top: 60px;
+            right: 30px;
+            color: #FFD700;
+            font-size: 32px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.8);
+            pointer-events: none;
+            z-index: 1001;
+            animation: floatUp 1s ease-out forwards;
+        `;
+        bonusElement.textContent = message;
+        
+        // Add float up animation if not already defined
+        if (!document.getElementById('float-up-style')) {
+            const style = document.createElement('style');
+            style.id = 'float-up-style';
+            style.textContent = `
+                @keyframes floatUp {
+                    0% { transform: translateY(0); opacity: 1; }
+                    100% { transform: translateY(-30px); opacity: 0; }
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(bonusElement);
+        
+        setTimeout(() => {
+            bonusElement.remove();
+        }, duration);
     }
     
     /**
@@ -218,9 +280,7 @@ export class UIManager {
         
         if (gameState) {
             this.updateLives(gameState.lives || 3);
-            if (gameState.score) {
-                this.scoreElement.textContent = `Score: ${gameState.score}`;
-            }
+            this.setScore(gameState.score || 0);
         }
     }
     
