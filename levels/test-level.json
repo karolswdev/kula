@@ -1,7 +1,7 @@
 {
-  "id": "test-level-1",
-  "name": "Gravity Introduction",
-  "description": "Learn to walk on walls and collect keys",
+  "id": "test-level-original",
+  "name": "Classic Box Room",
+  "description": "The original test environment - a simple room with walls and ceiling",
   "playerStart": {
     "position": { "x": 0, "y": 1, "z": 0 },
     "gravity": { "x": 0, "y": -1, "z": 0 }

@@ -1,0 +1,351 @@
+{
+  "id": "level-1",
+  "name": "Gravity Discovery",
+  "description": "Master jumping between tiles and discover the power of gravity shifting",
+  "playerStart": {
+    "position": { "x": 0, "y": 1.5, "z": 0 },
+    "gravity": { "x": 0, "y": -1, "z": 0 }
+  },
+  "platforms": [
+    {
+      "id": "start-tile",
+      "type": "static",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "size": { "width": 4, "height": 1, "depth": 4 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#90A090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-2",
+      "type": "static",
+      "position": { "x": 5, "y": 0, "z": 0 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-3",
+      "type": "static",
+      "position": { "x": 9, "y": 0, "z": 0 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-4",
+      "type": "static",
+      "position": { "x": 9, "y": 0, "z": 4 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-5",
+      "type": "static",
+      "position": { "x": 5, "y": 0, "z": 4 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-6-branch",
+      "type": "static",
+      "position": { "x": 0, "y": 0, "z": -4 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-7-branch",
+      "type": "static",
+      "position": { "x": -4, "y": 0, "z": -4 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-8-challenge",
+      "type": "static",
+      "position": { "x": 9, "y": 0, "z": -4 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "tile-9-wall-transition",
+      "type": "static",
+      "position": { "x": 13, "y": 0, "z": 0 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#707090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-base",
+      "type": "static",
+      "position": { "x": 15, "y": 8, "z": 0 },
+      "size": { "width": 1, "height": 16, "depth": 8 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#505080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-tile-1",
+      "type": "static",
+      "position": { "x": 14.5, "y": 3, "z": 0 },
+      "size": { "width": 0.5, "height": 3, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#6060A0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-tile-2",
+      "type": "static",
+      "position": { "x": 14.5, "y": 7, "z": 0 },
+      "size": { "width": 0.5, "height": 3, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#6060A0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-tile-3-key",
+      "type": "static",
+      "position": { "x": 14.5, "y": 11, "z": 0 },
+      "size": { "width": 0.5, "height": 3, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#7070B0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-tile-exit",
+      "type": "static",
+      "position": { "x": 14.5, "y": 11, "z": -5 },
+      "size": { "width": 0.5, "height": 3, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#8080C0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "corner-ramp-1",
+      "type": "static",
+      "position": { "x": 14, "y": 0.5, "z": 0 },
+      "size": { "width": 2, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": -0.2 },
+      "material": {
+        "color": "#606090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "corner-ramp-2",
+      "type": "static",
+      "position": { "x": 14.5, "y": 1.5, "z": 0 },
+      "size": { "width": 1, "height": 2, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": -0.4 },
+      "material": {
+        "color": "#606090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    }
+  ],
+  "keys": [
+    {
+      "id": "key-1",
+      "position": { "x": 5, "y": 1.5, "z": 0 },
+      "color": "#FFD700",
+      "scale": 1.0,
+      "rotationSpeed": 2.0,
+      "description": "First key - easy jump"
+    },
+    {
+      "id": "key-2",
+      "position": { "x": -4, "y": 1.5, "z": -4 },
+      "color": "#FFD700",
+      "scale": 1.0,
+      "rotationSpeed": 2.0,
+      "description": "Second key - requires navigation"
+    },
+    {
+      "id": "key-3",
+      "position": { "x": 14, "y": 11, "z": 0 },
+      "color": "#FFD700",
+      "scale": 1.2,
+      "rotationSpeed": 2.5,
+      "description": "Final key - on the wall, requires gravity shift!"
+    }
+  ],
+  "coins": [
+    {
+      "id": "coin-1",
+      "position": [2, 1, 0],
+      "value": 10,
+      "type": "silver"
+    },
+    {
+      "id": "coin-2",
+      "position": [7, 1, 0],
+      "value": 10,
+      "type": "silver"
+    },
+    {
+      "id": "coin-3",
+      "position": [9, 1, 2],
+      "value": 10,
+      "type": "silver"
+    },
+    {
+      "id": "coin-4",
+      "position": [5, 1, 4],
+      "value": 10,
+      "type": "silver"
+    },
+    {
+      "id": "coin-5",
+      "position": [0, 1, -4],
+      "value": 10,
+      "type": "silver"
+    },
+    {
+      "id": "coin-6",
+      "position": [14, 5, 0],
+      "value": 50,
+      "type": "gold"
+    },
+    {
+      "id": "coin-7",
+      "position": [14, 9, 0],
+      "value": 50,
+      "type": "gold"
+    }
+  ],
+  "exit": {
+    "position": { "x": 14, "y": 11, "z": -5 },
+    "requiredKeys": 3,
+    "lockedColor": "#FF0000",
+    "unlockedColor": "#00FF00",
+    "scale": 1.5,
+    "description": "Exit portal on the wall - gravity shift required!"
+  },
+  "hazards": [],
+  "decorations": [
+    {
+      "type": "arrow",
+      "position": { "x": 11, "y": 1, "z": 0 },
+      "rotation": { "x": 0, "y": 0, "z": -1.57 },
+      "color": "#00FFFF",
+      "description": "Visual hint pointing to wall transition"
+    }
+  ],
+  "levelBounds": {
+    "fallThreshold": -5
+  },
+  "gameSettings": {
+    "initialLives": 3,
+    "timeLimit": 0
+  },
+  "hints": [
+    "Jump carefully between tiles - timing matters!",
+    "Look for the glowing path to the wall",
+    "Walking on walls opens new possibilities"
+  ]
+}

@@ -8,6 +8,7 @@ import { PhysicsManager } from '../physics/PhysicsManager.js';
 import { CameraController } from '../camera/CameraController.js';
 import { LevelManager } from '../level/LevelManager.js';
 import { UIManager } from '../ui/UIManager.js';
+import { GameState } from '../game/GameState.js';
 
 export class Game {
     constructor() {
@@ -27,12 +28,8 @@ export class Game {
         // Container for the canvas
         this.container = document.getElementById('game-container');
         
-        // Game state - Requirement: PROD-006, PROD-008
-        this.gameState = {
-            lives: 3,
-            score: 0,
-            isRespawning: false
-        };
+        // Centralized game state manager - Requirements: PROD-008, PROD-010
+        this.gameState = new GameState();
     }
     
     /**
@@ -73,10 +70,18 @@ export class Game {
         this.initializeSystems();
         
         // Load the first level - Requirement: ARCH-002
-        this.loadLevel('/levels/test-level.json');
+        this.loadLevel('/levels/level-1.json');
         
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
+        
+        // Listen for level change messages (for testing)
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'changeLevel') {
+                console.log('Game::initialize - Received level change request:', event.data.level);
+                this.loadLevel(event.data.level);
+            }
+        });
         
         console.log('Game::initialize - Three.js scene initialized successfully');
     }
@@ -119,7 +124,8 @@ export class Game {
         this.physicsManager.setPlayerController(this.playerController);
         
         // Initialize camera controller - Requirement: PROD-009
-        this.cameraController = new CameraController(this.camera, this.playerMesh);
+        // Pass the canvas element for mouse/keyboard controls
+        this.cameraController = new CameraController(this.camera, this.playerMesh, this.renderer.domElement);
         
         // Initialize UI manager - Requirement: USER-002
         this.uiManager = new UIManager();
@@ -188,13 +194,18 @@ export class Game {
             console.log('Game::loadLevel - Level loaded successfully');
             
             // Initialize game state with level settings
-            if (this.levelManager.currentLevel?.gameSettings) {
-                this.gameState.lives = this.levelManager.currentLevel.gameSettings.initialLives || 3;
-            }
+            this.gameState.initializeLevel({
+                name: this.levelManager.currentLevel?.name,
+                totalKeys: this.levelManager.getGameState().totalKeys,
+                gameSettings: this.levelManager.currentLevel?.gameSettings
+            });
+            
+            // Subscribe to game state events
+            this.setupGameStateListeners();
             
             // Initialize UI with current state
             if (this.uiManager) {
-                this.uiManager.initialize(this.gameState, {
+                this.uiManager.initialize(this.gameState.getState(), {
                     levelName: this.levelManager.currentLevel?.name,
                     keysCollected: this.levelManager.getGameState().keysCollected,
                     totalKeys: this.levelManager.getGameState().totalKeys
@@ -333,26 +344,16 @@ export class Game {
     handlePlayerFall() {
         if (this.gameState.isRespawning) return;
         
-        console.log('Game::handlePlayerFall - Player fell! Lives before:', this.gameState.lives);
+        console.log('Game::handlePlayerFall - Player fell!');
         
         // Set respawning flag to prevent multiple triggers
-        this.gameState.isRespawning = true;
+        this.gameState.setRespawning(true);
         
-        // Lose a life
-        this.gameState.lives--;
-        console.log('Game::handlePlayerFall - Life Lost! Lives remaining:', this.gameState.lives);
+        // Lose a life through GameState manager
+        const isGameOver = this.gameState.loseLife('fall');
         
-        // Dispatch life lost event
-        window.dispatchEvent(new CustomEvent('lifeLost', {
-            detail: {
-                livesRemaining: this.gameState.lives,
-                cause: 'fall'
-            }
-        }));
-        
-        // Check for game over
-        if (this.gameState.lives <= 0) {
-            this.handleGameOver();
+        // If game over, let the GameState event handler deal with it
+        if (isGameOver) {
             return;
         }
         
@@ -361,7 +362,7 @@ export class Game {
         
         // Clear respawning flag after a short delay
         setTimeout(() => {
-            this.gameState.isRespawning = false;
+            this.gameState.setRespawning(false);
         }, 500);
     }
     
@@ -411,19 +412,51 @@ export class Game {
      */
     handleGameOver() {
         console.log('Game::handleGameOver - GAME OVER!');
-        this.gameState.isRespawning = true; // Prevent further updates
         
-        // Dispatch game over event
-        window.dispatchEvent(new CustomEvent('gameOver', {
-            detail: {
-                finalScore: this.gameState.score,
-                levelReached: this.levelManager.currentLevel?.name
-            }
-        }));
+        // Stop the game
+        this.stop();
         
         // Could show game over screen here
-        // For now, just stop the game
-        this.stop();
+        // For now the GameState manager handles the event dispatching
+    }
+    
+    /**
+     * Setup listeners for GameState events
+     */
+    setupGameStateListeners() {
+        // Listen for game over from GameState
+        this.gameState.on('gameOver', (data) => {
+            console.log('Game: Received game over event:', data);
+            this.handleGameOver();
+            
+            // Also dispatch global event for UI
+            window.dispatchEvent(new CustomEvent('gameOver', { detail: data }));
+        });
+        
+        // Listen for lives changes
+        this.gameState.on('livesChanged', (data) => {
+            console.log('Game: Lives changed:', data);
+            // Dispatch global event for UI
+            window.dispatchEvent(new CustomEvent('lifeLost', {
+                detail: {
+                    livesRemaining: data.lives,
+                    cause: data.cause
+                }
+            }));
+        });
+        
+        // Listen for score changes
+        this.gameState.on('scoreChanged', (data) => {
+            console.log('Game: Score changed:', data);
+            // Dispatch global event for UI
+            window.dispatchEvent(new CustomEvent('scoreChanged', { detail: data }));
+        });
+        
+        // Listen for key collection
+        this.gameState.on('keyCollected', (data) => {
+            console.log('Game: Key collected:', data);
+            // UI will be updated through UIManager
+        });
     }
     
     /**

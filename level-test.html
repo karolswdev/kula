@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kula Browser - Level Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        .level-selector {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+        .level-btn {
+            padding: 10px 20px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 2px solid white;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-size: 16px;
+            font-weight: 500;
+        }
+        .level-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+        .level-btn.active {
+            background: white;
+            color: #667eea;
+        }
+        .game-frame {
+            width: 100%;
+            height: 600px;
+            border: 3px solid white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            background: white;
+        }
+        .level-info {
+            margin-top: 20px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            backdrop-filter: blur(10px);
+        }
+        .level-info h2 {
+            margin-top: 0;
+        }
+        .controls {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .control-group {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 15px;
+            border-radius: 8px;
+        }
+        .control-group h3 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #ffd700;
+        }
+        .control-group p {
+            margin: 5px 0;
+        }
+        .key {
+            display: inline-block;
+            padding: 3px 8px;
+            background: rgba(255, 255, 255, 0.2);
+            border: 1px solid white;
+            border-radius: 4px;
+            font-family: monospace;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 Kula Browser - Level Testing Suite</h1>
+        
+        <div class="level-selector">
+            <button class="level-btn active" onclick="loadLevel('level-1')">
+                Level 1: Gravity Discovery
+            </button>
+            <button class="level-btn" onclick="loadLevel('test-level-enhanced')">
+                Tutorial: Jump and Shift
+            </button>
+            <button class="level-btn" onclick="loadLevel('test-level')">
+                Classic Box Room
+            </button>
+        </div>
+        
+        <iframe id="gameFrame" class="game-frame" src="index.html"></iframe>
+        
+        <div class="level-info">
+            <h2>Current Level: Gravity Discovery</h2>
+            <p id="levelDescription">Master jumping between tiles and discover the power of gravity shifting. This level features separated tile platforms requiring precise jumping, and culminates in a gravity-defying wall climb to collect the final key and reach the exit.</p>
+            
+            <div class="controls">
+                <div class="control-group">
+                    <h3>Movement Controls</h3>
+                    <p><span class="key">W</span> <span class="key">A</span> <span class="key">S</span> <span class="key">D</span> - Move the ball</p>
+                    <p><span class="key">SPACE</span> - Jump</p>
+                    <p><span class="key">SHIFT</span> - Sprint (move faster)</p>
+                </div>
+                <div class="control-group">
+                    <h3>Camera Controls</h3>
+                    <p><span class="key">Q</span> <span class="key">E</span> - Rotate camera</p>
+                    <p><span class="key">Mouse Drag</span> - Free camera rotation</p>
+                    <p><span class="key">Scroll</span> - Zoom in/out</p>
+                </div>
+            </div>
+            
+            <div class="control-group" style="margin-top: 20px;">
+                <h3>Level Objectives</h3>
+                <p>✨ Collect all 3 golden keys to unlock the exit portal</p>
+                <p>🎯 Key 1: Simple jump to adjacent tile</p>
+                <p>🎯 Key 2: Navigate through branching tile paths</p>
+                <p>🎯 Key 3: Walk up the wall using gravity shift!</p>
+                <p>🚪 Exit Portal: Located on the wall - requires gravity mastery</p>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const levelInfo = {
+            'level-1': {
+                name: 'Level 1: Gravity Discovery',
+                description: 'Master jumping between tiles and discover the power of gravity shifting. This level features separated tile platforms requiring precise jumping, and culminates in a gravity-defying wall climb to collect the final key and reach the exit.'
+            },
+            'test-level-enhanced': {
+                name: 'Tutorial: Jump and Shift',
+                description: 'A compact tutorial level teaching the fundamentals of jumping between platforms and using gravity shifts. Features a simpler layout with clear progression from floor to wall to ceiling challenges.'
+            },
+            'test-level': {
+                name: 'Classic Box Room',
+                description: 'The original test environment - a simple enclosed room with floor, walls, and ceiling. Perfect for testing basic movement and gravity mechanics without the complexity of tile-based platforming.'
+            }
+        };
+        
+        function loadLevel(levelName) {
+            // Update button states
+            document.querySelectorAll('.level-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update level info
+            const info = levelInfo[levelName];
+            document.querySelector('.level-info h2').textContent = 'Current Level: ' + info.name;
+            document.getElementById('levelDescription').textContent = info.description;
+            
+            // Reload the game with the new level
+            const iframe = document.getElementById('gameFrame');
+            
+            // Send a message to the iframe to change the level
+            iframe.contentWindow.postMessage({
+                type: 'changeLevel',
+                level: `/levels/${levelName}.json`
+            }, '*');
+        }
+        
+        // Listen for messages from the game
+        window.addEventListener('message', (event) => {
+            if (event.data.type === 'levelComplete') {
+                alert(`Level Complete! Keys collected: ${event.data.keysCollected}/${event.data.totalKeys}`);
+            }
+        });
+    </script>
+</body>
+</html>

@@ -2,72 +2,8 @@ TC-2.1: Gravity Vector Change Test
 =====================================
 
 Initial Gravity: (0.00, -9.82, 0.00)
-Final Gravity: (9.51, -0.31, 0.00)
+Final Gravity: (0.00, -9.82, 0.00)
 
 Console Logs:
-2025-09-13T21:57:05.641Z: Initial Gravity: (0.00, -9.82, 0.00)
-2025-09-13T21:57:08.937Z: Edge Detection: Player X=6.57, Wall X=10.00, Distance=2.93
-2025-09-13T21:57:08.969Z: Edge Detection: Player X=6.69, Wall X=10.00, Distance=2.81
-2025-09-13T21:57:08.993Z: Edge Detection: Player X=6.82, Wall X=10.00, Distance=2.68
-2025-09-13T21:57:09.023Z: Edge Detection: Player X=6.91, Wall X=10.00, Distance=2.59
-2025-09-13T21:57:09.055Z: Edge Detection: Player X=7.01, Wall X=10.00, Distance=2.49
-2025-09-13T21:57:09.080Z: Edge Detection: Player X=7.14, Wall X=10.00, Distance=2.36
-2025-09-13T21:57:09.102Z: Edge Detection: Player X=7.24, Wall X=10.00, Distance=2.26
-2025-09-13T21:57:09.133Z: Edge Detection: Player X=7.32, Wall X=10.00, Distance=2.18
-2025-09-13T21:57:09.167Z: Edge Detection: Player X=7.44, Wall X=10.00, Distance=2.06
-2025-09-13T21:57:09.198Z: Edge Detection: Player X=7.57, Wall X=10.00, Distance=1.93
-2025-09-13T21:57:09.227Z: Edge Detection: Player X=7.69, Wall X=10.00, Distance=1.81
-2025-09-13T21:57:09.255Z: Edge Detection: Player X=7.81, Wall X=10.00, Distance=1.69
-2025-09-13T21:57:09.278Z: Edge Detection: Player X=7.91, Wall X=10.00, Distance=1.59
-2025-09-13T21:57:09.308Z: Edge Detection: Player X=8.00, Wall X=10.00, Distance=1.50
-2025-09-13T21:57:09.346Z: Edge Detection: Player X=8.12, Wall X=10.00, Distance=1.38
-2025-09-13T21:57:09.346Z: PhysicsManager::checkEdgeTransition - Edge crossing detected!
-2025-09-13T21:57:09.346Z:   Distance to wall edge: 1.38
-2025-09-13T21:57:09.346Z: Gravity: Reorienting from (0.00, -9.82, 0.00)
-2025-09-13T21:57:09.346Z: Gravity: Target set to (9.82, 0.00, 0.00)
-2025-09-13T21:57:09.368Z: Edge Detection: Player X=8.24, Wall X=10.00, Distance=1.26
-2025-09-13T21:57:09.401Z: Edge Detection: Player X=8.33, Wall X=10.00, Distance=1.17
-2025-09-13T21:57:09.426Z: Edge Detection: Player X=8.46, Wall X=10.00, Distance=1.04
-2025-09-13T21:57:09.451Z: Edge Detection: Player X=8.57, Wall X=10.00, Distance=0.93
-2025-09-13T21:57:09.480Z: Edge Detection: Player X=8.66, Wall X=10.00, Distance=0.84
-2025-09-13T21:57:09.514Z: Edge Detection: Player X=8.78, Wall X=10.00, Distance=0.72
-2025-09-13T21:57:09.545Z: Edge Detection: Player X=8.90, Wall X=10.00, Distance=0.60
-2025-09-13T21:57:09.574Z: Edge Detection: Player X=9.03, Wall X=10.00, Distance=0.47
-2025-09-13T21:57:09.616Z: Edge Detection: Player X=9.15, Wall X=10.00, Distance=0.35
-2025-09-13T21:57:09.644Z: Edge Detection: Player X=9.29, Wall X=10.00, Distance=0.21
-2025-09-13T21:57:09.672Z: Edge Detection: Player X=9.43, Wall X=10.00, Distance=0.07
-2025-09-13T21:57:09.704Z: Edge Detection: Player X=9.56, Wall X=10.00, Distance=0.06
-2025-09-13T21:57:09.729Z: Edge Detection: Player X=9.52, Wall X=10.00, Distance=0.02
-2025-09-13T21:57:09.762Z: Edge Detection: Player X=9.50, Wall X=10.00, Distance=0.00
-2025-09-13T21:57:09.791Z: Edge Detection: Player X=9.47, Wall X=10.00, Distance=0.03
-2025-09-13T21:57:09.834Z: Edge Detection: Player X=9.45, Wall X=10.00, Distance=0.05
-2025-09-13T21:57:09.876Z: Edge Detection: Player X=9.44, Wall X=10.00, Distance=0.06
-2025-09-13T21:57:09.915Z: Edge Detection: Player X=9.43, Wall X=10.00, Distance=0.07
-2025-09-13T21:57:09.956Z: Edge Detection: Player X=9.43, Wall X=10.00, Distance=0.07
-2025-09-13T21:57:09.997Z: Edge Detection: Player X=9.44, Wall X=10.00, Distance=0.06
-2025-09-13T21:57:10.040Z: Edge Detection: Player X=9.46, Wall X=10.00, Distance=0.04
-2025-09-13T21:57:10.074Z: Edge Detection: Player X=9.48, Wall X=10.00, Distance=0.02
-2025-09-13T21:57:10.118Z: Edge Detection: Player X=9.52, Wall X=10.00, Distance=0.02
-2025-09-13T21:57:10.156Z: Edge Detection: Player X=9.56, Wall X=10.00, Distance=0.06
-2025-09-13T21:57:10.187Z: Edge Detection: Player X=9.61, Wall X=10.00, Distance=0.11
-2025-09-13T21:57:10.231Z: Edge Detection: Player X=9.66, Wall X=10.00, Distance=0.16
-2025-09-13T21:57:10.273Z: Edge Detection: Player X=9.73, Wall X=10.00, Distance=0.23
-2025-09-13T21:57:10.303Z: Edge Detection: Player X=9.81, Wall X=10.00, Distance=0.31
-2025-09-13T21:57:10.345Z: Edge Detection: Player X=9.89, Wall X=10.00, Distance=0.39
-2025-09-13T21:57:10.377Z: Edge Detection: Player X=9.99, Wall X=10.00, Distance=0.49
-2025-09-13T21:57:10.407Z: Edge Detection: Player X=10.07, Wall X=10.00, Distance=0.57
-2025-09-13T21:57:10.447Z: Edge Detection: Player X=10.18, Wall X=10.00, Distance=0.68
-2025-09-13T21:57:10.480Z: Edge Detection: Player X=10.30, Wall X=10.00, Distance=0.80
-2025-09-13T21:57:10.515Z: Edge Detection: Player X=10.43, Wall X=10.00, Distance=0.93
-2025-09-13T21:57:10.568Z: Edge Detection: Player X=10.57, Wall X=10.00, Distance=1.07
-2025-09-13T21:57:10.590Z: Edge Detection: Player X=10.72, Wall X=10.00, Distance=1.22
-2025-09-13T21:57:10.628Z: Edge Detection: Player X=10.88, Wall X=10.00, Distance=1.38
-2025-09-13T21:57:10.661Z: Edge Detection: Player X=11.04, Wall X=10.00, Distance=1.54
-2025-09-13T21:57:10.693Z: Edge Detection: Player X=11.20, Wall X=10.00, Distance=1.70
-2025-09-13T21:57:10.725Z: Edge Detection: Player X=11.35, Wall X=10.00, Distance=1.85
-2025-09-13T21:57:10.756Z: Edge Detection: Player X=11.54, Wall X=10.00, Distance=2.04
-2025-09-13T21:57:10.786Z: Edge Detection: Player X=11.75, Wall X=10.00, Distance=2.25
-2025-09-13T21:57:10.819Z: Edge Detection: Player X=11.95, Wall X=10.00, Distance=2.45
-2025-09-13T21:57:10.850Z: Edge Detection: Player X=12.17, Wall X=10.00, Distance=2.67
-2025-09-13T21:57:10.885Z: Edge Detection: Player X=12.39, Wall X=10.00, Distance=2.89
-2025-09-13T21:57:11.146Z: Final Gravity: (9.51, -0.31, 0.00)
+2025-09-13T23:03:11.177Z: Initial Gravity: (0.00, -9.82, 0.00)
+2025-09-13T23:03:16.749Z: Final Gravity: (0.00, -9.82, 0.00)

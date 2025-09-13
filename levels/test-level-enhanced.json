@@ -1,0 +1,194 @@
+{
+  "id": "test-level-enhanced",
+  "name": "Tutorial: Jump and Shift",
+  "description": "A compact tutorial level teaching jumping and gravity mechanics",
+  "playerStart": {
+    "position": { "x": 0, "y": 1.5, "z": 0 },
+    "gravity": { "x": 0, "y": -1, "z": 0 }
+  },
+  "platforms": [
+    {
+      "id": "central-hub",
+      "type": "static",
+      "position": { "x": 0, "y": 0, "z": 0 },
+      "size": { "width": 4, "height": 1, "depth": 4 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#A0A0A0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "path-tile-1",
+      "type": "static",
+      "position": { "x": 4.5, "y": 0, "z": 0 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#909090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "path-tile-2",
+      "type": "static",
+      "position": { "x": 8, "y": 0, "z": 0 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#909090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "branch-tile-1",
+      "type": "static",
+      "position": { "x": 0, "y": 0, "z": 4.5 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#909090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "branch-tile-2",
+      "type": "static",
+      "position": { "x": 0, "y": 0, "z": -4.5 },
+      "size": { "width": 3, "height": 1, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#909090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-section",
+      "type": "static",
+      "position": { "x": 10, "y": 5, "z": 0 },
+      "size": { "width": 1, "height": 10, "depth": 8 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#606090",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "wall-platform",
+      "type": "static",
+      "position": { "x": 9.5, "y": 8, "z": 0 },
+      "size": { "width": 0.5, "height": 3, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#7070A0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "ceiling-section",
+      "type": "static",
+      "position": { "x": 0, "y": 10, "z": 0 },
+      "size": { "width": 8, "height": 1, "depth": 8 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#808080",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    },
+    {
+      "id": "ceiling-platform",
+      "type": "static",
+      "position": { "x": 0, "y": 9.5, "z": -3 },
+      "size": { "width": 3, "height": 0.5, "depth": 3 },
+      "rotation": { "x": 0, "y": 0, "z": 0 },
+      "material": {
+        "color": "#8080B0",
+        "roughness": 0.8,
+        "metalness": 0.2
+      },
+      "physics": {
+        "isGravitySurface": true
+      }
+    }
+  ],
+  "keys": [
+    {
+      "id": "key-1",
+      "position": { "x": 0, "y": 1.5, "z": 4.5 },
+      "color": "#FFD700",
+      "scale": 1.0,
+      "rotationSpeed": 2.0,
+      "description": "Tutorial key - simple jump"
+    },
+    {
+      "id": "key-2",
+      "position": { "x": 8, "y": 1.5, "z": 0 },
+      "color": "#FFD700",
+      "scale": 1.0,
+      "rotationSpeed": 2.0,
+      "description": "Path key - requires tile navigation"
+    },
+    {
+      "id": "key-3",
+      "position": { "x": 9, "y": 8, "z": 0 },
+      "color": "#FF8800",
+      "scale": 1.2,
+      "rotationSpeed": 2.5,
+      "description": "Wall key - gravity shift required!"
+    }
+  ],
+  "exit": {
+    "position": { "x": 0, "y": 9, "z": -3 },
+    "requiredKeys": 3,
+    "lockedColor": "#FF0000",
+    "unlockedColor": "#00FF00",
+    "scale": 1.5,
+    "description": "Ceiling exit - ultimate gravity challenge!"
+  },
+  "hazards": [],
+  "decorations": [],
+  "levelBounds": {
+    "fallThreshold": -5
+  },
+  "gameSettings": {
+    "initialLives": 5,
+    "timeLimit": 0
+  },
+  "hints": [
+    "Press SPACE to jump between tiles",
+    "Collect all golden keys to unlock the exit",
+    "Walk up walls to reach new areas"
+  ]
+}

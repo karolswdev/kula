@@ -3,10 +3,13 @@
  * Requirements: PROD-009 (Camera System: Automated Tracking)
  */
 
+import { CameraControls } from './CameraControls.js';
+
 export class CameraController {
-    constructor(camera, target) {
+    constructor(camera, target, domElement) {
         this.camera = camera;
         this.target = target; // The target to follow (player mesh)
+        this.domElement = domElement || document.getElementById('game-canvas');
         
         // Camera offset from player (in player's local space)
         this.offset = new THREE.Vector3(10, 10, 10);
@@ -24,6 +27,18 @@ export class CameraController {
         this.initialPosition = camera.position.clone();
         this.initialRotation = camera.rotation.clone();
         
+        // Initialize camera controls for user input
+        this.controls = null;
+        this.useManualControls = true; // Enable manual camera controls
+        
+        // Initialize controls after a short delay to ensure DOM is ready
+        setTimeout(() => {
+            if (this.domElement) {
+                this.controls = new CameraControls(this.camera, this.target, this.domElement);
+                console.log('CameraController::constructor - Camera controls initialized');
+            }
+        }, 100);
+        
         console.log('CameraController::constructor - Initialized');
     }
     
@@ -39,16 +54,25 @@ export class CameraController {
             this.updateUpTransition(deltaTime);
         }
         
-        // Calculate desired camera position based on current up vector
-        const desiredPosition = this.calculateCameraPosition();
-        
-        // Smoothly interpolate camera position
-        this.camera.position.lerp(desiredPosition, 5.0 * deltaTime);
-        
-        // Look at the target with the correct up vector
-        const lookAtTarget = this.target.position.clone().add(this.lookAtOffset);
-        this.camera.up.copy(this.currentUp);
-        this.camera.lookAt(lookAtTarget);
+        // If manual controls are enabled and available, use them
+        if (this.useManualControls && this.controls) {
+            // Update the controls' up vector to match current gravity
+            this.controls.setUpVector(this.currentUp);
+            // Let the controls handle camera positioning
+            this.controls.update(deltaTime);
+        } else {
+            // Fall back to automatic camera following
+            // Calculate desired camera position based on current up vector
+            const desiredPosition = this.calculateCameraPosition();
+            
+            // Smoothly interpolate camera position
+            this.camera.position.lerp(desiredPosition, 5.0 * deltaTime);
+            
+            // Look at the target with the correct up vector
+            const lookAtTarget = this.target.position.clone().add(this.lookAtOffset);
+            this.camera.up.copy(this.currentUp);
+            this.camera.lookAt(lookAtTarget);
+        }
         
         // Log camera state occasionally for debugging
         if (Math.random() < 0.01) {
@@ -156,6 +180,32 @@ export class CameraController {
         this.currentUp.set(0, 1, 0);
         this.targetUp.set(0, 1, 0);
         this.isTransitioning = false;
+        
+        // Reset controls if available
+        if (this.controls) {
+            this.controls.reset();
+        }
+        
         console.log('CameraController::reset - Camera reset to initial state');
+    }
+    
+    /**
+     * Enable or disable manual camera controls
+     * @param {boolean} enabled
+     */
+    setManualControlsEnabled(enabled) {
+        this.useManualControls = enabled;
+        if (this.controls) {
+            this.controls.setEnabled(enabled);
+        }
+    }
+    
+    /**
+     * Clean up resources
+     */
+    dispose() {
+        if (this.controls) {
+            this.controls.dispose();
+        }
     }
 }

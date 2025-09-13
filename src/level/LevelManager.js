@@ -1,7 +1,9 @@
 /**
  * LevelManager - Handles loading and management of game levels from JSON data
- * Requirements: ARCH-002 (Data-Driven Levels), PROD-004 (Key Collection), PROD-005 (Exit Portal)
+ * Requirements: ARCH-002 (Data-Driven Levels), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring)
  */
+
+import { Coin } from '../entities/Coin.js';
 
 export class LevelManager {
     constructor(scene, physicsManager) {
@@ -26,6 +28,7 @@ export class LevelManager {
         // Entity collections
         this.keys = new Map();
         this.platforms = new Map();
+        this.coins = new Map(); // Requirement: PROD-010
         this.exitPortal = null;
         
         console.log('LevelManager::constructor - Level manager initialized');
@@ -91,6 +94,11 @@ export class LevelManager {
         // Create exit portal - Requirement: PROD-005
         if (this.currentLevel.exit) {
             this.createExitPortal(this.currentLevel.exit);
+        }
+        
+        // Create coins - Requirement: PROD-010
+        if (this.currentLevel.coins) {
+            this.createCoins(this.currentLevel.coins);
         }
         
         // Set level bounds
@@ -316,16 +324,49 @@ export class LevelManager {
     }
     
     /**
+     * Create coins from level data
+     * Requirement: PROD-010 - Collectibles: Scoring
+     */
+    createCoins(coinsData) {
+        coinsData.forEach(coinData => {
+            const coin = new Coin(
+                coinData.id,
+                coinData.position,
+                coinData.value || 10,
+                coinData.type || 'silver'
+            );
+            
+            // Add coin mesh to scene
+            coin.addToScene(this.scene);
+            
+            // Track coin
+            this.coins.set(coinData.id, coin);
+            this.levelEntities.push(coin.mesh);
+            
+            console.log(`LevelManager::createCoins - Created ${coin.type} coin: ${coin.id} worth ${coin.value} points`);
+        });
+    }
+    
+    /**
      * Update level entities (animations, state changes)
      * @param {number} deltaTime - Time since last frame
      */
     update(deltaTime) {
+        const elapsedTime = Date.now() * 0.001; // Convert to seconds
+        
         // Animate keys (rotation)
         this.keys.forEach(key => {
             if (!key.userData.collected) {
                 key.rotation.y += key.userData.rotationSpeed * deltaTime;
                 // Subtle floating animation
                 key.position.y += Math.sin(Date.now() * 0.001) * 0.005;
+            }
+        });
+        
+        // Update coins (rotation and float animation)
+        this.coins.forEach(coin => {
+            if (!coin.isCollected) {
+                coin.update(deltaTime, elapsedTime);
             }
         });
         
@@ -440,6 +481,27 @@ export class LevelManager {
             }
         });
         
+        // Check coin collisions - Requirement: PROD-010
+        this.coins.forEach((coin, coinId) => {
+            if (coin.checkCollision(position, radius)) {
+                const collectionData = coin.collect();
+                if (collectionData) {
+                    // Add score through GameState (if available via window.game)
+                    if (window.game?.gameState) {
+                        window.game.gameState.addScore(collectionData.value, 'coin');
+                    }
+                    
+                    // Remove coin from scene after collection animation
+                    setTimeout(() => {
+                        coin.removeFromScene(this.scene);
+                        this.coins.delete(coinId);
+                    }, 300);
+                    
+                    console.log(`LevelManager::checkCollectibles - Collected ${collectionData.type} coin worth ${collectionData.value} points`);
+                }
+            }
+        });
+        
         // Check exit portal collision
         if (this.exitPortal && !this.exitPortal.userData.isLocked) {
             const distance = position.distanceTo(this.exitPortal.position);
@@ -477,11 +539,18 @@ export class LevelManager {
             }
         });
         
+        // Dispose of coins
+        this.coins.forEach(coin => {
+            coin.removeFromScene(this.scene);
+            coin.dispose();
+        });
+        
         // Reset collections
         this.levelEntities = [];
         this.levelPhysicsBodies = [];
         this.keys.clear();
         this.platforms.clear();
+        this.coins.clear();
         this.exitPortal = null;
         
         // Reset game state
