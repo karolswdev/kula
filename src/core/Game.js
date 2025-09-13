@@ -6,6 +6,7 @@
 import { PlayerController } from '../player/PlayerController.js';
 import { PhysicsManager } from '../physics/PhysicsManager.js';
 import { CameraController } from '../camera/CameraController.js';
+import { LevelManager } from '../level/LevelManager.js';
 
 export class Game {
     constructor() {
@@ -19,6 +20,7 @@ export class Game {
         this.playerController = null;
         this.physicsManager = null;
         this.cameraController = null;
+        this.levelManager = null;
         
         // Container for the canvas
         this.container = document.getElementById('game-container');
@@ -58,11 +60,11 @@ export class Game {
         // Create clock for delta time
         this.clock = new THREE.Clock();
         
-        // Setup the static level elements
-        this.setupLevel();
-        
-        // Initialize game systems - Requirement: ARCH-001
+        // Initialize game systems first - Requirement: ARCH-001
         this.initializeSystems();
+        
+        // Load the first level - Requirement: ARCH-002
+        this.loadLevel('/levels/test-level.json');
         
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
@@ -80,27 +82,28 @@ export class Game {
         // Initialize physics manager
         this.physicsManager = new PhysicsManager();
         
-        // Create physics bodies for level elements
-        // Create floor first so it's in place when player is added
-        const floorPhysicsBody = this.physicsManager.createFloorBody(
-            new THREE.Vector3(0, 0, 0),
-            new THREE.Vector2(20, 20)  // Match visual floor size
-        );
+        // Initialize level manager - Requirement: ARCH-002
+        this.levelManager = new LevelManager(this.scene, this.physicsManager);
         
-        // Create wall physics body - Requirement: PROD-001
-        const wallPhysicsBody = this.physicsManager.createWallBody(
-            new THREE.Vector3(10, 10, 0),  // Match visual wall position
-            new THREE.Vector2(20, 20)  // Wall dimensions
-        );
+        // Setup lighting for the scene
+        this.setupLighting();
         
-        // Create player body starting slightly above the floor
-        const playerPhysicsBody = this.physicsManager.createPlayerBody(
-            new THREE.Vector3(0, 1, 0)  // Start higher to ensure proper collision
-        );
+        // Create player sphere mesh - will be positioned when level loads
+        const playerGeometry = new THREE.SphereGeometry(0.5, 32, 16);
+        const playerMaterial = new THREE.MeshStandardMaterial({ 
+            color: 0xFF0000, // Bright red for high visibility - NFR-003
+            roughness: 0.3,
+            metalness: 0.5
+        });
+        this.playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
+        this.playerMesh.castShadow = true;
+        this.playerMesh.receiveShadow = true;
+        this.playerMesh.name = 'player';
+        this.scene.add(this.playerMesh);
         
-        // Initialize player controller
+        // Player physics body will be created after level loads
+        // Initialize player controller (physics body will be set when level loads)
         this.playerController = new PlayerController();
-        this.playerController.setPhysicsBody(playerPhysicsBody);
         this.playerController.setCamera(this.camera);
         
         // Connect physics manager with player controller for gravity updates
@@ -113,88 +116,74 @@ export class Game {
     }
     
     /**
-     * Setup the static level with floor, player, and lights
-     * Requirements: TECH-P-002, NFR-003 (Visual Identity), PROD-001 (Gravity Reorientation)
+     * Setup lighting for the scene
+     * Requirement: NFR-003 - Visual Identity
      */
-    setupLevel() {
-        console.log('Game::setupLevel - Creating level elements');
-        
-        // Create floor plane - Requirement: PROD-011 (Modular Blocks)
-        const floorGeometry = new THREE.PlaneGeometry(20, 20); // Smaller floor for testing
-        const floorMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x808080, // Gray floor for contrast
-            roughness: 0.8,
-            metalness: 0.2
-        });
-        const floor = new THREE.Mesh(floorGeometry, floorMaterial);
-        floor.rotation.x = -Math.PI / 2; // Rotate to horizontal
-        floor.position.y = 0;
-        floor.receiveShadow = true;
-        floor.name = 'floor';
-        this.scene.add(floor);
-        console.log('Game::setupLevel - Floor created at position:', floor.position);
-        
-        // Create wall platform perpendicular to floor - Requirement: PROD-001
-        // Wall is positioned at the edge of the floor for testing gravity transitions
-        const wallGeometry = new THREE.PlaneGeometry(20, 20);
-        const wallMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0x606060, // Darker gray for wall
-            roughness: 0.8,
-            metalness: 0.2
-        });
-        const wall = new THREE.Mesh(wallGeometry, wallMaterial);
-        wall.position.x = 10; // Position at right edge of floor
-        wall.position.y = 10; // Center vertically
-        wall.rotation.y = -Math.PI / 2; // Rotate to face left (perpendicular to floor)
-        wall.receiveShadow = true;
-        wall.castShadow = true;
-        wall.name = 'wall';
-        this.scene.add(wall);
-        console.log('Game::setupLevel - Wall created at position:', wall.position);
-        
-        // Create player sphere - Requirements: NFR-003 (bright, distinguishable)
-        const playerGeometry = new THREE.SphereGeometry(0.5, 32, 16);
-        const playerMaterial = new THREE.MeshStandardMaterial({ 
-            color: 0xFF0000, // Bright red for high visibility
-            roughness: 0.3,
-            metalness: 0.5
-        });
-        this.playerMesh = new THREE.Mesh(playerGeometry, playerMaterial);
-        this.playerMesh.position.set(0, 1, 0); // Start at center, above floor to match physics body
-        this.playerMesh.castShadow = true;
-        this.playerMesh.receiveShadow = true;
-        this.playerMesh.name = 'player';
-        this.scene.add(this.playerMesh);
-        console.log('Game::setupLevel - Player sphere created at position:', this.playerMesh.position);
+    setupLighting() {
+        console.log('Game::setupLighting - Setting up scene lighting');
         
         // Add ambient light for overall illumination
         const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
         this.scene.add(ambientLight);
-        console.log('Game::setupLevel - Ambient light added');
         
         // Add directional light for shadows and depth
         const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
         directionalLight.position.set(5, 10, 5);
         directionalLight.castShadow = true;
-        directionalLight.shadow.camera.left = -10;
-        directionalLight.shadow.camera.right = 10;
-        directionalLight.shadow.camera.top = 10;
-        directionalLight.shadow.camera.bottom = -10;
+        directionalLight.shadow.camera.left = -20;
+        directionalLight.shadow.camera.right = 20;
+        directionalLight.shadow.camera.top = 20;
+        directionalLight.shadow.camera.bottom = -20;
         directionalLight.shadow.camera.near = 0.1;
         directionalLight.shadow.camera.far = 50;
         directionalLight.shadow.mapSize.width = 2048;
         directionalLight.shadow.mapSize.height = 2048;
         this.scene.add(directionalLight);
-        console.log('Game::setupLevel - Directional light added at position:', directionalLight.position);
         
-        // Log scene contents for verification
-        console.log('Game::setupLevel - Scene contains', this.scene.children.length, 'objects');
-        this.scene.children.forEach(child => {
-            if (child.name) {
-                console.log(`  - ${child.name}: type=${child.type}, position=(${child.position.x}, ${child.position.y}, ${child.position.z})`);
-            }
-        });
+        console.log('Game::setupLighting - Lighting setup complete');
     }
+    
+    /**
+     * Load a level from JSON
+     * Requirement: ARCH-002 - Data-Driven Levels
+     * @param {string} levelPath - Path to the level JSON file
+     */
+    async loadLevel(levelPath) {
+        console.log('Game::loadLevel - Loading level:', levelPath);
+        
+        try {
+            // Load the level using LevelManager
+            await this.levelManager.load(levelPath);
+            
+            // Get player start position from level
+            const startPos = this.levelManager.getPlayerStartPosition();
+            
+            // Create player physics body at start position
+            const playerPhysicsBody = this.physicsManager.createPlayerBody(startPos);
+            this.playerController.setPhysicsBody(playerPhysicsBody);
+            
+            // Position player mesh
+            this.playerMesh.position.copy(startPos);
+            
+            // Update camera to look at player
+            this.camera.position.set(
+                startPos.x + 10,
+                startPos.y + 10,
+                startPos.z + 10
+            );
+            this.camera.lookAt(startPos);
+            
+            console.log('Game::loadLevel - Level loaded successfully');
+            
+            // Expose level manager to window for testing
+            window.game = window.game || {};
+            window.game.levelManager = this.levelManager;
+            
+        } catch (error) {
+            console.error('Game::loadLevel - Failed to load level:', error);
+        }
+    }
+    
     
     /**
      * Start the game loop
@@ -256,7 +245,17 @@ export class Game {
                     this.playerMesh,
                     this.physicsManager.getPlayerBody()
                 );
+                
+                // Check for collectibles and objectives - Requirements: PROD-004, PROD-005
+                if (this.levelManager) {
+                    this.levelManager.checkCollectibles(this.playerMesh.position);
+                }
             }
+        }
+        
+        // Update level manager (animations, etc) - Requirement: ARCH-002
+        if (this.levelManager) {
+            this.levelManager.update(deltaTime);
         }
         
         // Update camera controller - Requirement: PROD-009

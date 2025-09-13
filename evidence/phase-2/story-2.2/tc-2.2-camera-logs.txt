@@ -4,15 +4,13 @@ TC-2.2: Camera Smooth Rotation Test
 Initial Camera Position: (10.00, 10.50, 10.00)
 Initial Camera Rotation: (-0.79, 0.62, 0.52)
 
-Final Camera Position: (-0.55, 10.52, 10.00)
-Final Camera Rotation: (-0.79, -0.62, 1.57)
+Final Camera Position: (9.86, 15.69, -6.76)
+Final Camera Rotation: (-0.72, -0.72, 1.57)
 
 Console Logs:
-2025-09-13T21:28:27.766Z: Camera: Pos(10.0, 10.5, 10.0), Up(0.0, 1.0, 0.0)
-2025-09-13T21:28:29.569Z: Camera: Pos(15.1, 10.5, 10.0), Up(0.0, 1.0, 0.0)
-2025-09-13T21:28:29.966Z: CameraController::onGravityChange - New surface normal: (-1.00, 0.00, 0.00)
-2025-09-13T21:28:29.966Z: Camera: Starting rotation from Up(0.00, 1.00, 0.00) to Up(-1.00, 0.00, 0.00)
-2025-09-13T21:28:31.726Z: Camera: Rotation complete! Final Up(-1.00, 0.00, 0.00)
-2025-09-13T21:28:31.918Z: Camera: Pos(-0.3, 10.7, 10.0), Up(-1.0, 0.0, 0.0)
+2025-09-13T21:57:09.788Z: CameraController::onGravityChange - New surface normal: (-1.00, 0.00, 0.00)
+2025-09-13T21:57:09.789Z: Camera: Starting rotation from Up(0.00, 1.00, 0.00) to Up(-1.00, 0.00, 0.00)
+2025-09-13T21:57:10.598Z: Camera: Pos(4.3, 13.9, -0.0), Up(-1.0, 0.3, 0.0)
+2025-09-13T21:57:11.520Z: Camera: Rotation complete! Final Up(-1.00, 0.00, 0.00)
 
 Frame captures saved for GIF creation: 10 frames
