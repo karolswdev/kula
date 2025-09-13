@@ -7,6 +7,7 @@ import { PlayerController } from '../player/PlayerController.js';
 import { PhysicsManager } from '../physics/PhysicsManager.js';
 import { CameraController } from '../camera/CameraController.js';
 import { LevelManager } from '../level/LevelManager.js';
+import { UIManager } from '../ui/UIManager.js';
 
 export class Game {
     constructor() {
@@ -21,9 +22,17 @@ export class Game {
         this.physicsManager = null;
         this.cameraController = null;
         this.levelManager = null;
+        this.uiManager = null;
         
         // Container for the canvas
         this.container = document.getElementById('game-container');
+        
+        // Game state - Requirement: PROD-006, PROD-008
+        this.gameState = {
+            lives: 3,
+            score: 0,
+            isRespawning: false
+        };
     }
     
     /**
@@ -112,6 +121,9 @@ export class Game {
         // Initialize camera controller - Requirement: PROD-009
         this.cameraController = new CameraController(this.camera, this.playerMesh);
         
+        // Initialize UI manager - Requirement: USER-002
+        this.uiManager = new UIManager();
+        
         console.log('Game::initializeSystems - All systems initialized');
     }
     
@@ -175,9 +187,32 @@ export class Game {
             
             console.log('Game::loadLevel - Level loaded successfully');
             
-            // Expose level manager to window for testing
+            // Initialize game state with level settings
+            if (this.levelManager.currentLevel?.gameSettings) {
+                this.gameState.lives = this.levelManager.currentLevel.gameSettings.initialLives || 3;
+            }
+            
+            // Initialize UI with current state
+            if (this.uiManager) {
+                this.uiManager.initialize(this.gameState, {
+                    levelName: this.levelManager.currentLevel?.name,
+                    keysCollected: this.levelManager.getGameState().keysCollected,
+                    totalKeys: this.levelManager.getGameState().totalKeys
+                });
+            }
+            
+            // Dispatch level loaded event
+            window.dispatchEvent(new CustomEvent('levelLoaded', {
+                detail: {
+                    levelName: this.levelManager.currentLevel?.name || 'Unknown'
+                }
+            }));
+            
+            // Expose level manager and game state to window for testing
             window.game = window.game || {};
             window.game.levelManager = this.levelManager;
+            window.game.gameState = this.gameState;
+            window.game.uiManager = this.uiManager;
             
         } catch (error) {
             console.error('Game::loadLevel - Failed to load level:', error);
@@ -250,6 +285,11 @@ export class Game {
                 if (this.levelManager) {
                     this.levelManager.checkCollectibles(this.playerMesh.position);
                 }
+                
+                // Check for fall condition - Requirement: PROD-006
+                if (this.checkFallCondition()) {
+                    this.handlePlayerFall();
+                }
             }
         }
         
@@ -270,6 +310,120 @@ export class Game {
      */
     render() {
         this.renderer.render(this.scene, this.camera);
+    }
+    
+    /**
+     * Check if player has fallen below threshold
+     * Requirement: PROD-006 - Failure Condition: Falling
+     * @returns {boolean} True if player has fallen
+     */
+    checkFallCondition() {
+        if (!this.playerMesh || !this.levelManager || this.gameState.isRespawning) {
+            return false;
+        }
+        
+        const threshold = this.levelManager.getFallThreshold();
+        return this.playerMesh.position.y < threshold;
+    }
+    
+    /**
+     * Handle player falling - lose life and reset position
+     * Requirements: PROD-006, PROD-008 - Lives System
+     */
+    handlePlayerFall() {
+        if (this.gameState.isRespawning) return;
+        
+        console.log('Game::handlePlayerFall - Player fell! Lives before:', this.gameState.lives);
+        
+        // Set respawning flag to prevent multiple triggers
+        this.gameState.isRespawning = true;
+        
+        // Lose a life
+        this.gameState.lives--;
+        console.log('Game::handlePlayerFall - Life Lost! Lives remaining:', this.gameState.lives);
+        
+        // Dispatch life lost event
+        window.dispatchEvent(new CustomEvent('lifeLost', {
+            detail: {
+                livesRemaining: this.gameState.lives,
+                cause: 'fall'
+            }
+        }));
+        
+        // Check for game over
+        if (this.gameState.lives <= 0) {
+            this.handleGameOver();
+            return;
+        }
+        
+        // Reset player position
+        this.resetPlayerPosition();
+        
+        // Clear respawning flag after a short delay
+        setTimeout(() => {
+            this.gameState.isRespawning = false;
+        }, 500);
+    }
+    
+    /**
+     * Reset player to starting position
+     * Requirement: PROD-006 - Player reset after falling
+     */
+    resetPlayerPosition() {
+        const startPos = this.levelManager.getPlayerStartPosition();
+        console.log('Game::resetPlayerPosition - Resetting player to:', startPos);
+        
+        // Reset physics body
+        const playerBody = this.physicsManager.getPlayerBody();
+        if (playerBody) {
+            playerBody.position.set(startPos.x, startPos.y, startPos.z);
+            playerBody.velocity.set(0, 0, 0);
+            playerBody.angularVelocity.set(0, 0, 0);
+        }
+        
+        // Reset visual mesh
+        if (this.playerMesh) {
+            this.playerMesh.position.copy(startPos);
+            this.playerMesh.rotation.set(0, 0, 0);
+        }
+        
+        // Reset camera
+        if (this.camera) {
+            this.camera.position.set(
+                startPos.x + 10,
+                startPos.y + 10,
+                startPos.z + 10
+            );
+            this.camera.lookAt(startPos);
+        }
+        
+        // Reset gravity to default
+        if (this.playerController) {
+            this.playerController.setGravityDirection(new THREE.Vector3(0, -1, 0));
+        }
+        
+        console.log('Game::resetPlayerPosition - Player reset complete');
+    }
+    
+    /**
+     * Handle game over state
+     * Requirement: PROD-008 - Game Over state
+     */
+    handleGameOver() {
+        console.log('Game::handleGameOver - GAME OVER!');
+        this.gameState.isRespawning = true; // Prevent further updates
+        
+        // Dispatch game over event
+        window.dispatchEvent(new CustomEvent('gameOver', {
+            detail: {
+                finalScore: this.gameState.score,
+                levelReached: this.levelManager.currentLevel?.name
+            }
+        }));
+        
+        // Could show game over screen here
+        // For now, just stop the game
+        this.stop();
     }
     
     /**

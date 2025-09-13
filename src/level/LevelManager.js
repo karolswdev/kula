@@ -362,6 +362,15 @@ export class LevelManager {
             console.log(`LevelManager::collectKey - Collected key: ${keyId}`);
             console.log(`LevelManager::collectKey - Keys: ${this.gameState.keysCollected}/${this.gameState.totalKeys}`);
             
+            // Dispatch key collected event for UI
+            window.dispatchEvent(new CustomEvent('keyCollected', {
+                detail: {
+                    keyId: keyId,
+                    collected: this.gameState.keysCollected,
+                    total: this.gameState.totalKeys
+                }
+            }));
+            
             // Check if all keys collected
             if (this.gameState.keysCollected >= this.gameState.totalKeys) {
                 console.log('LevelManager::collectKey - All keys collected!');

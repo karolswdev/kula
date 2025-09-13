@@ -312,16 +312,26 @@ test.describe('PHASE-3: Level Objectives & Core Gameplay Loop', () => {
     test('TC-3.4: Fall detection and player reset', async () => {
         console.log('TC-3.4: Testing fall detection and reset mechanics');
         
-        // This test requires fall detection to be implemented in Story 3.2
-        // For now, we'll create a placeholder that will be completed later
-        
-        // Get initial player position
-        const initialPosition = await page.evaluate(() => {
+        // Get initial game state and player position
+        const initialState = await page.evaluate(() => {
             const mesh = window.game.playerMesh;
-            return { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z };
+            const gameState = window.game.gameState;
+            return { 
+                position: { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z },
+                lives: gameState.lives
+            };
         });
         
-        console.log('TC-3.4: Initial player position:', initialPosition);
+        console.log('TC-3.4: Initial state:', initialState);
+        
+        // Listen for life lost event
+        const lifeLostPromise = page.evaluate(() => {
+            return new Promise(resolve => {
+                window.addEventListener('lifeLost', (event) => {
+                    resolve(event.detail);
+                }, { once: true });
+            });
+        });
         
         // Move player below fall threshold
         await page.evaluate(() => {
@@ -336,27 +346,43 @@ test.describe('PHASE-3: Level Objectives & Core Gameplay Loop', () => {
             }
         });
         
-        // Wait for fall detection (to be implemented)
+        // Wait for next update cycle to trigger fall detection
         await page.waitForTimeout(100);
         
-        // For now, just verify we can detect the fall condition
-        const fallCondition = await page.evaluate(() => {
-            const manager = window.game.levelManager;
-            const playerY = window.game.playerMesh.position.y;
-            const threshold = manager.getFallThreshold();
-            return {
-                playerY: playerY,
-                threshold: threshold,
-                shouldFall: playerY < threshold
+        // Check if life was lost
+        const lifeLostEvent = await Promise.race([
+            lifeLostPromise,
+            page.waitForTimeout(500).then(() => null)
+        ]);
+        
+        // Verify life was lost and player was reset
+        const afterFall = await page.evaluate(() => {
+            const mesh = window.game.playerMesh;
+            const gameState = window.game.gameState;
+            return { 
+                position: { x: mesh.position.x, y: mesh.position.y, z: mesh.position.z },
+                lives: gameState.lives,
+                isRespawning: gameState.isRespawning
             };
         });
         
-        expect(fallCondition.shouldFall).toBe(true);
+        // Assert life was lost
+        expect(afterFall.lives).toBe(initialState.lives - 1);
         
-        console.log('TC-3.4: Fall condition detected');
-        console.log(`  - Player Y: ${fallCondition.playerY}`);
-        console.log(`  - Threshold: ${fallCondition.threshold}`);
-        console.log('  - Note: Full implementation pending in Story 3.2');
+        // Assert player was reset to starting position
+        expect(afterFall.position.y).toBeGreaterThan(0); // Should be above ground
+        expect(afterFall.position.x).toBeCloseTo(0, 1);
+        expect(afterFall.position.y).toBeCloseTo(1, 0); // Allow some tolerance for physics
+        expect(afterFall.position.z).toBeCloseTo(0, 1);
+        
+        // Log results
+        console.log('TC-3.4: PASSED - Fall detection and reset working');
+        console.log(`  - Lives before: ${initialState.lives}, after: ${afterFall.lives}`);
+        console.log(`  - Player reset to: (${afterFall.position.x}, ${afterFall.position.y}, ${afterFall.position.z})`);
+        
+        if (lifeLostEvent) {
+            console.log(`  - Life lost event received: ${lifeLostEvent.livesRemaining} lives remaining`);
+        }
     });
 });
 
