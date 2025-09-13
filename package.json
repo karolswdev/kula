@@ -1,0 +1,30 @@
+{
+  "name": "kula-browser",
+  "version": "1.0.0",
+  "description": "A browser-based 3D puzzle-platformer inspired by Kula World",
+  "main": "src/main.js",
+  "scripts": {
+    "start": "npx http-server . -p 8081 -c-1",
+    "build": "echo 'Build task placeholder'",
+    "test": "echo 'Test task placeholder'",
+    "lint": "eslint src/",
+    "format": "prettier --write src/"
+  },
+  "keywords": [
+    "game",
+    "three.js",
+    "puzzle",
+    "platformer"
+  ],
+  "author": "",
+  "license": "MIT",
+  "dependencies": {
+    "three": "^0.160.0",
+    "cannon-es": "^0.20.0"
+  },
+  "devDependencies": {
+    "eslint": "^8.56.0",
+    "prettier": "^3.1.1",
+    "http-server": "^14.1.1"
+  }
+}
