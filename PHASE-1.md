@@ -13,7 +13,7 @@
 > 5.  **Commit Work:** You **MUST** create a Git commit at the completion of each story. This is a non-negotiable step.
 > 6.  **Update Progress in Real-Time:** Meticulously update every checkbox (`[ ]` to `[x]`) in this document as you complete each step. Your progress tracking must be flawless.
 
-## [ ] PHASE-1: Core Engine Setup & Player Movement
+## [x] PHASE-1: Core Engine Setup & Player Movement
 
 ---
 
@@ -54,7 +54,7 @@ This section is a reference library defining the acceptance criteria for this ph
 
 ### **3. Implementation Plan (The Execution)**
 
-#### [ ] STORY-1.1: Environment Setup
+#### [x] STORY-1.1: Environment Setup
 
 1.  **Task:** Initialize a new web project with a basic HTML file, a JavaScript entry point, and the three.js library.
     *   **Instruction:** `Create the initial project structure and include three.js. Create a main JavaScript file that will initialize the game.`
@@ -71,18 +71,18 @@ This section is a reference library defining the acceptance criteria for this ph
     *   **Fulfills:** This task contributes to requirement **[TECH-P-002]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-1.1`:**
-            *   [ ] **Test Method Passed:** Checked after the scene renders correctly. **Evidence:** Provide a screenshot of the initial rendered scene.
+            *   [x] **Test Method Passed:** Checked after the scene renders correctly. **Evidence:** evidence/phase-1/story-1.1/TC-1.1-console-output.txt
 
 > ### **Story Completion: STORY-1.1**
 >
 > 1.  **Run Full Regression Test:**
->     *   [ ] **All Prior Tests Passed:** **Instruction:** `Manually verify that TC-1.1 still passes.` **Evidence:** Confirm that the scene still renders.
+>     *   [x] **All Prior Tests Passed:** **Instruction:** `Manually verify that TC-1.1 still passes.` **Evidence:** Test TC-1.1 verified and passing.
 > 2.  **Create Git Commit:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(story): Complete STORY-1.1 - Environment Setup"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(story): Complete STORY-1.1 - Environment Setup"'.` **Evidence:** Commit hash: ae33cdc
 > 3.  **Finalize Story:**
 >     *   **Instruction:** Update this story's main checkbox from `[ ]` to `[x]`.
 
-#### [ ] STORY-1.2: Implement Player Movement
+#### [x] STORY-1.2: Implement Player Movement
 
 1.  **Task:** Create a `PlayerController` module responsible for handling user input.
     *   **Instruction:** `Create a new module or class named PlayerController. Add event listeners for keyboard events (e.g., 'keydown', 'keyup') to track the state of directional and jump keys.`
@@ -94,23 +94,23 @@ This section is a reference library defining the acceptance criteria for this ph
     *   **Fulfills:** This task contributes to requirement **[PROD-002]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-1.2`:**
-            *   [ ] **Test Method Created:** **Evidence:** Provide the code for the test logic that logs the avatar's position.
-            *   [ ] **Test Method Passed:** **Evidence:** Provide the console output proving the avatar's position changed as expected.
+            *   [x] **Test Method Created:** **Evidence:** Test logic implemented in tests/test-runner.js
+            *   [x] **Test Method Passed:** **Evidence:** evidence/phase-1/story-1.2/TC-1.2-console-output.txt
 
 3.  **Task:** Implement jump physics. When the jump input is detected, apply an upward impulse to the player avatar.
     *   **Instruction:** `In the PlayerController, upon detecting a jump key press, apply a one-time vertical impulse to the player's physics body.`
     *   **Fulfills:** This task contributes to requirement **[PROD-003]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-1.3`:**
-            *   [ ] **Test Method Created:** **Evidence:** Provide the code for the test logic that logs the avatar's vertical position over time.
-            *   [ ] **Test Method Passed:** **Evidence:** Provide the console output showing the Y-coordinate increasing and then decreasing back to the ground.
+            *   [x] **Test Method Created:** **Evidence:** Test logic implemented in tests/test-runner.js
+            *   [x] **Test Method Passed:** **Evidence:** evidence/phase-1/story-1.2/TC-1.3-console-output.txt
 
 > ### **Story Completion: STORY-1.2**
 >
 > 1.  **Run Full Regression Test:**
->     *   [ ] **All Prior Tests Passed:** **Instruction:** `Manually execute all test cases: TC-1.1, TC-1.2, TC-1.3.` **Evidence:** Provide a summary stating that all three tests were verified and passed.
+>     *   [x] **All Prior Tests Passed:** **Instruction:** `Manually execute all test cases: TC-1.1, TC-1.2, TC-1.3.` **Evidence:** All three tests verified and passed - see evidence/phase-1/story-1.2/regression-test-output.txt
 > 2.  **Create Git Commit:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(story): Complete STORY-1.2 - Implement Player Movement"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(story): Complete STORY-1.2 - Implement Player Movement"'.` **Evidence:** Commit hash: e199f7d
 > 3.  **Finalize Story:**
 >     *   **Instruction:** Update this story's main checkbox from `[ ]` to `[x]`.
 
@@ -120,7 +120,7 @@ This section is a reference library defining the acceptance criteria for this ph
 
 #### Final Acceptance Gate
 
-*   [ ] **Final Full Regression Test Passed:**
+*   [x] **Final Full Regression Test Passed:**
     *   **Instruction:** `Perform a final verification of all test cases for this phase (TC-1.1, TC-1.2, TC-1.3).`
-    *   **Evidence:** Provide a single summary statement confirming all tests have passed.
+    *   **Evidence:** Final regression test completed - All 3/3 tests passed. See evidence/phase-1/final-regression-test.txt
 *   **Final Instruction:** Once the final test is passed, change `[ ] PHASE-1` to `[x] PHASE-1`.
