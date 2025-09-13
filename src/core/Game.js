@@ -3,6 +3,9 @@
  * Requirements: TECH-P-002, ARCH-001
  */
 
+import { PlayerController } from '../player/PlayerController.js';
+import { PhysicsManager } from '../physics/PhysicsManager.js';
+
 export class Game {
     constructor() {
         this.scene = null;
@@ -10,6 +13,10 @@ export class Game {
         this.renderer = null;
         this.clock = null;
         this.isRunning = false;
+        
+        // Game systems - Requirement: ARCH-001 (Modular Game Systems)
+        this.playerController = null;
+        this.physicsManager = null;
         
         // Container for the canvas
         this.container = document.getElementById('game-container');
@@ -52,10 +59,39 @@ export class Game {
         // Setup the static level elements
         this.setupLevel();
         
+        // Initialize game systems - Requirement: ARCH-001
+        this.initializeSystems();
+        
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
         
         console.log('Game::initialize - Three.js scene initialized successfully');
+    }
+    
+    /**
+     * Initialize game systems (physics, player controller)
+     * Requirement: ARCH-001 - Modular Game Systems
+     */
+    initializeSystems() {
+        console.log('Game::initializeSystems - Initializing game systems');
+        
+        // Initialize physics manager
+        this.physicsManager = new PhysicsManager();
+        
+        // Create physics bodies for level elements
+        const playerPhysicsBody = this.physicsManager.createPlayerBody(
+            new THREE.Vector3(0, 0.5, 0)
+        );
+        const floorPhysicsBody = this.physicsManager.createFloorBody(
+            new THREE.Vector3(0, 0, 0),
+            new THREE.Vector2(20, 20)
+        );
+        
+        // Initialize player controller
+        this.playerController = new PlayerController();
+        this.playerController.setPhysicsBody(playerPhysicsBody);
+        
+        console.log('Game::initializeSystems - All systems initialized');
     }
     
     /**
@@ -169,8 +205,23 @@ export class Game {
      * @param {number} elapsedTime - Total elapsed time in seconds
      */
     update(deltaTime, elapsedTime) {
-        // Placeholder for game updates
-        // Will be expanded with PlayerController, PhysicsManager, etc.
+        // Update player controller (handles input and applies forces)
+        if (this.playerController) {
+            this.playerController.update(deltaTime);
+        }
+        
+        // Update physics simulation
+        if (this.physicsManager) {
+            this.physicsManager.update(deltaTime);
+            
+            // Sync visual mesh with physics body
+            if (this.playerMesh && this.physicsManager.getPlayerBody()) {
+                this.physicsManager.syncMeshWithBody(
+                    this.playerMesh,
+                    this.physicsManager.getPlayerBody()
+                );
+            }
+        }
     }
     
     /**
