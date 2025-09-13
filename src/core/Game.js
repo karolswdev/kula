@@ -5,6 +5,7 @@
 
 import { PlayerController } from '../player/PlayerController.js';
 import { PhysicsManager } from '../physics/PhysicsManager.js';
+import { CameraController } from '../camera/CameraController.js';
 
 export class Game {
     constructor() {
@@ -17,6 +18,7 @@ export class Game {
         // Game systems - Requirement: ARCH-001 (Modular Game Systems)
         this.playerController = null;
         this.physicsManager = null;
+        this.cameraController = null;
         
         // Container for the canvas
         this.container = document.getElementById('game-container');
@@ -99,6 +101,9 @@ export class Game {
         // Initialize player controller
         this.playerController = new PlayerController();
         this.playerController.setPhysicsBody(playerPhysicsBody);
+        
+        // Initialize camera controller - Requirement: PROD-009
+        this.cameraController = new CameraController(this.camera, this.playerMesh);
         
         console.log('Game::initializeSystems - All systems initialized');
     }
@@ -248,6 +253,11 @@ export class Game {
                     this.physicsManager.getPlayerBody()
                 );
             }
+        }
+        
+        // Update camera controller - Requirement: PROD-009
+        if (this.cameraController) {
+            this.cameraController.update(deltaTime);
         }
     }
     
