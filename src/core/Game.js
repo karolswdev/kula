@@ -101,6 +101,10 @@ export class Game {
         // Initialize player controller
         this.playerController = new PlayerController();
         this.playerController.setPhysicsBody(playerPhysicsBody);
+        this.playerController.setCamera(this.camera);
+        
+        // Connect physics manager with player controller for gravity updates
+        this.physicsManager.setPlayerController(this.playerController);
         
         // Initialize camera controller - Requirement: PROD-009
         this.cameraController = new CameraController(this.camera, this.playerMesh);

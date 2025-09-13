@@ -49,6 +49,9 @@ export class PhysicsManager {
         this.targetGravity = null;
         this.gravityTransitionSpeed = 2.0; // How fast gravity transitions (radians per second)
         
+        // Reference to player controller for gravity updates
+        this.playerController = null;
+        
         // Edge detection parameters
         this.edgeDetectionDistance = 2.0; // Distance to check for edges
         this.surfaceDetectionAngle = Math.PI / 4; // 45 degrees - max angle to consider a surface walkable
@@ -238,6 +241,11 @@ export class PhysicsManager {
         if (window.game && window.game.cameraController) {
             window.game.cameraController.onGravityChange(newNormal);
         }
+        
+        // Notify player controller about gravity change
+        if (this.playerController) {
+            this.playerController.updateGravity(this.targetGravity);
+        }
     }
     
     /**
@@ -265,6 +273,11 @@ export class PhysicsManager {
             this.targetGravity = null;
             
             console.log(`Gravity: Reorientation complete! New gravity: (${current.x.toFixed(2)}, ${current.y.toFixed(2)}, ${current.z.toFixed(2)})`);
+            
+            // Final update to player controller
+            if (this.playerController) {
+                this.playerController.updateGravity(current);
+            }
         }
     }
     
@@ -287,6 +300,18 @@ export class PhysicsManager {
      */
     getPlayerBody() {
         return this.playerBody;
+    }
+    
+    /**
+     * Set player controller reference for gravity updates
+     * @param {PlayerController} controller - The player controller
+     */
+    setPlayerController(controller) {
+        this.playerController = controller;
+        // Initialize with current gravity
+        if (this.playerController) {
+            this.playerController.updateGravity(this.world.gravity);
+        }
     }
     
     /**

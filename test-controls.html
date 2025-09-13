@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Movement Controls Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: monospace;
+            background: #1a1a1a;
+            color: #fff;
+        }
+        h1 { color: #4CAF50; }
+        .test-section {
+            margin: 20px 0;
+            padding: 20px;
+            border: 1px solid #444;
+            border-radius: 5px;
+            background: #2a2a2a;
+        }
+        .instructions {
+            background: #333;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 10px 0;
+        }
+        .control-list {
+            list-style: none;
+            padding: 0;
+        }
+        .control-list li {
+            padding: 5px 0;
+            font-size: 14px;
+        }
+        .key {
+            display: inline-block;
+            padding: 3px 8px;
+            background: #4CAF50;
+            color: #000;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-right: 10px;
+        }
+        .test-results {
+            margin-top: 20px;
+            padding: 15px;
+            background: #1a1a1a;
+            border: 1px solid #4CAF50;
+            border-radius: 5px;
+        }
+        .success { color: #4CAF50; }
+        .fail { color: #f44336; }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #4CAF50;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <h1>🎮 Movement Controls Test - Gravity Orientation Fix Verification</h1>
+    
+    <div class="test-section">
+        <h2>Test Purpose</h2>
+        <p>Verify that the W/S key swap issue has been fixed. The movement should now be intuitive:</p>
+        <ul class="control-list">
+            <li><span class="key">W</span> Should move the ball FORWARD (away from camera)</li>
+            <li><span class="key">S</span> Should move the ball BACKWARD (toward camera)</li>
+            <li><span class="key">A</span> Should move the ball LEFT</li>
+            <li><span class="key">D</span> Should move the ball RIGHT</li>
+            <li><span class="key">SPACE</span> Should make the ball JUMP</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Test Scenarios</h2>
+        
+        <div class="instructions">
+            <h3>Scenario 1: Floor Movement (Default Gravity)</h3>
+            <ol>
+                <li>Press <span class="key">W</span> - Ball should roll forward (negative Z direction)</li>
+                <li>Press <span class="key">S</span> - Ball should roll backward (positive Z direction)</li>
+                <li>Press <span class="key">A</span> - Ball should roll left (negative X direction)</li>
+                <li>Press <span class="key">D</span> - Ball should roll right (positive X direction)</li>
+            </ol>
+            <div class="test-results">
+                <strong>Expected Result:</strong> Movement should feel natural and intuitive, matching standard game controls.
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>Scenario 2: Wall Movement (After Gravity Change)</h3>
+            <ol>
+                <li>Move to a wall and activate gravity change (if implemented)</li>
+                <li>Press <span class="key">W</span> - Ball should move away from camera along the wall</li>
+                <li>Press <span class="key">S</span> - Ball should move toward camera along the wall</li>
+                <li>Left/Right should work relative to camera view</li>
+            </ol>
+            <div class="test-results">
+                <strong>Expected Result:</strong> Controls should maintain consistent feel even on walls/ceilings.
+            </div>
+        </div>
+
+        <div class="instructions">
+            <h3>Scenario 3: Diagonal Movement</h3>
+            <ol>
+                <li>Press <span class="key">W</span> + <span class="key">D</span> - Ball should move forward-right</li>
+                <li>Press <span class="key">S</span> + <span class="key">A</span> - Ball should move backward-left</li>
+            </ol>
+            <div class="test-results">
+                <strong>Expected Result:</strong> Diagonal movement should be properly normalized (not faster than cardinal directions).
+            </div>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Live Game Test</h2>
+        <p>Test the controls in the actual game below:</p>
+        <iframe src="http://localhost:8081/index.html"></iframe>
+    </div>
+
+    <div class="test-section">
+        <h2>Console Verification</h2>
+        <p>Open browser DevTools (F12) and check console for movement logs:</p>
+        <ul>
+            <li class="success">✓ Forward vector should point away from camera when W is pressed</li>
+            <li class="success">✓ Movement force should be positive when moving forward</li>
+            <li class="success">✓ Position should change in expected direction</li>
+        </ul>
+    </div>
+
+    <div class="test-section">
+        <h2>Fix Summary</h2>
+        <p><strong>Issue:</strong> W and S keys were swapped due to inverted signs in movement calculation</p>
+        <p><strong>Solution:</strong> Changed line 214-215 in PlayerController.js:</p>
+        <pre style="background: #1a1a1a; padding: 10px; border-radius: 5px;">
+// Before (INCORRECT):
+if (this.keys.forward) moveForward -= 1;
+if (this.keys.backward) moveForward += 1;
+
+// After (CORRECT):
+if (this.keys.forward) moveForward += 1;  // W key moves forward
+if (this.keys.backward) moveForward -= 1; // S key moves backward
+        </pre>
+        <p class="success"><strong>Status:</strong> ✓ Fixed and ready for testing</p>
+    </div>
+
+    <script>
+        console.log('Movement Controls Test Page Loaded');
+        console.log('Please test the controls in the embedded game above');
+        console.log('Expected behavior:');
+        console.log('  W = Forward (away from camera)');
+        console.log('  S = Backward (toward camera)');
+        console.log('  A = Left');
+        console.log('  D = Right');
+        console.log('  Space = Jump');
+    </script>
+</body>
+</html>

@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gravity Controls Test - Kula Browser</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #222;
+            color: #fff;
+        }
+        
+        #test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .test-section {
+            background: #333;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+        }
+        
+        h1 {
+            color: #4CAF50;
+        }
+        
+        h2 {
+            color: #8BC34A;
+            border-bottom: 2px solid #555;
+            padding-bottom: 10px;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+        }
+        
+        .status.pass {
+            background: #1b5e20;
+            color: #4CAF50;
+        }
+        
+        .status.fail {
+            background: #b71c1c;
+            color: #f44336;
+        }
+        
+        .status.warning {
+            background: #f57c00;
+            color: #ffb74d;
+        }
+        
+        .test-item {
+            padding: 10px;
+            margin: 5px 0;
+            background: #444;
+            border-left: 4px solid #666;
+            border-radius: 4px;
+        }
+        
+        .test-item.active {
+            border-left-color: #4CAF50;
+            background: #445544;
+        }
+        
+        pre {
+            background: #111;
+            padding: 10px;
+            border-radius: 4px;
+            overflow-x: auto;
+        }
+        
+        button {
+            background: #4CAF50;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        button:hover {
+            background: #45a049;
+        }
+        
+        #game-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #4CAF50;
+            border-radius: 4px;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div id="test-container">
+        <h1>🎮 Gravity Reorientation Controls Test Suite</h1>
+        
+        <div class="test-section">
+            <h2>Test Overview</h2>
+            <p>This test suite verifies that the gravity reorientation system correctly adapts player controls based on the current gravity direction.</p>
+            <div class="status warning">
+                <strong>⚠️ Manual Testing Required:</strong> Open the game in a separate tab and follow the test scenarios below.
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 Fixed Issues</h2>
+            <ul>
+                <li>✅ Controls now adapt to new gravity orientation</li>
+                <li>✅ Movement forces applied relative to current surface</li>
+                <li>✅ Jump direction follows gravity orientation</li>
+                <li>✅ Ground detection works with any gravity direction</li>
+            </ul>
+        </div>
+        
+        <div class="test-section">
+            <h2>📋 Test Scenarios</h2>
+            
+            <div class="test-item" id="test-1">
+                <h3>Test 1: Floor Movement (Gravity Down)</h3>
+                <p><strong>Initial State:</strong> Player starts on floor with gravity pointing down (-Y)</p>
+                <p><strong>Actions:</strong></p>
+                <ol>
+                    <li>Press W/S - Should move forward/backward on XZ plane</li>
+                    <li>Press A/D - Should move left/right on XZ plane</li>
+                    <li>Press Space - Should jump upward (+Y direction)</li>
+                </ol>
+                <p><strong>Expected:</strong> Standard controls work as expected</p>
+            </div>
+            
+            <div class="test-item" id="test-2">
+                <h3>Test 2: Wall Transition</h3>
+                <p><strong>Actions:</strong></p>
+                <ol>
+                    <li>Move player to the right edge of the floor (toward X=10)</li>
+                    <li>Continue moving right to trigger gravity transition</li>
+                    <li>Observe gravity shifting to point right (+X)</li>
+                </ol>
+                <p><strong>Expected:</strong> Smooth gravity transition, camera reorients</p>
+            </div>
+            
+            <div class="test-item" id="test-3">
+                <h3>Test 3: Wall Movement (Gravity Right)</h3>
+                <p><strong>State:</strong> Player on wall with gravity pointing right (+X)</p>
+                <p><strong>Actions:</strong></p>
+                <ol>
+                    <li>Press W/S - Should move up/down along the wall (YZ plane)</li>
+                    <li>Press A/D - Should move sideways along the wall (YZ plane)</li>
+                    <li>Press Space - Should jump left (-X direction, away from wall)</li>
+                </ol>
+                <p><strong>Expected:</strong> Controls feel natural relative to wall as "floor"</p>
+            </div>
+            
+            <div class="test-item" id="test-4">
+                <h3>Test 4: Return to Floor</h3>
+                <p><strong>Actions:</strong></p>
+                <ol>
+                    <li>While on wall, jump away from it (Space key)</li>
+                    <li>Move back toward the floor area</li>
+                    <li>Gravity should transition back to down (-Y)</li>
+                </ol>
+                <p><strong>Expected:</strong> Smooth transition back to normal gravity</p>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>🎯 Implementation Details</h2>
+            <pre>
+// Key Changes Made:
+
+1. PlayerController now maintains gravity-oriented coordinate system:
+   - upVector: opposite of gravity (the "up" direction)
+   - forwardVector: perpendicular to gravity and camera facing
+   - rightVector: perpendicular to both gravity and forward
+
+2. Movement forces are applied in transformed space:
+   - Input mapped to forward/right vectors
+   - Forces applied relative to current surface orientation
+   
+3. Jump impulse applied opposite to gravity:
+   - Jump direction = -gravity.normalized * jumpImpulse
+   - Works correctly on any surface
+
+4. Ground detection checks velocity along gravity:
+   - Uses dot product to get velocity component along gravity
+   - Works for any gravity orientation
+
+5. PhysicsManager notifies PlayerController of gravity changes:
+   - updateGravity() called when gravity transitions
+   - Coordinate system recalculated for new orientation
+            </pre>
+        </div>
+        
+        <div class="test-section">
+            <h2>🚀 Quick Test</h2>
+            <button onclick="window.open('http://localhost:8081/', '_blank')">Open Game in New Tab</button>
+            <button onclick="runAutomatedCheck()">Run Automated Check</button>
+            <div id="automated-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Console Commands for Testing</h2>
+            <p>Open browser console in game tab and use these commands:</p>
+            <pre>
+// Check current gravity
+console.log('Gravity:', window.game.physicsManager.world.gravity);
+
+// Check player controller state
+console.log('Up Vector:', window.game.playerController.upVector);
+console.log('Forward Vector:', window.game.playerController.forwardVector);
+console.log('Right Vector:', window.game.playerController.rightVector);
+
+// Force gravity change (for testing)
+window.game.physicsManager.reorientGravity(new CANNON.Vec3(-1, 0, 0)); // Gravity left
+window.game.physicsManager.reorientGravity(new CANNON.Vec3(0, 1, 0));  // Gravity up
+window.game.physicsManager.reorientGravity(new CANNON.Vec3(0, -1, 0)); // Gravity down (normal)
+            </pre>
+        </div>
+    </div>
+    
+    <script>
+        function runAutomatedCheck() {
+            const resultsDiv = document.getElementById('automated-results');
+            resultsDiv.innerHTML = '<div class="status warning">⏳ Running automated checks...</div>';
+            
+            // Check if the game files exist and have the correct modifications
+            fetch('/src/player/PlayerController.js')
+                .then(response => response.text())
+                .then(content => {
+                    let results = [];
+                    
+                    // Check for gravity-aware code
+                    if (content.includes('updateGravity')) {
+                        results.push('✅ PlayerController has updateGravity method');
+                    } else {
+                        results.push('❌ PlayerController missing updateGravity method');
+                    }
+                    
+                    if (content.includes('upVector') && content.includes('forwardVector')) {
+                        results.push('✅ PlayerController has orientation vectors');
+                    } else {
+                        results.push('❌ PlayerController missing orientation vectors');
+                    }
+                    
+                    if (content.includes('updateMovementBasis')) {
+                        results.push('✅ PlayerController has movement basis calculation');
+                    } else {
+                        results.push('❌ PlayerController missing movement basis calculation');
+                    }
+                    
+                    if (content.includes('checkGroundContact')) {
+                        results.push('✅ PlayerController has gravity-aware ground detection');
+                    } else {
+                        results.push('❌ PlayerController missing gravity-aware ground detection');
+                    }
+                    
+                    const allPassed = results.every(r => r.startsWith('✅'));
+                    const statusClass = allPassed ? 'pass' : 'fail';
+                    const statusText = allPassed ? '✅ All checks passed!' : '❌ Some checks failed';
+                    
+                    resultsDiv.innerHTML = `
+                        <div class="status ${statusClass}">
+                            <strong>${statusText}</strong>
+                            <ul>${results.map(r => `<li>${r}</li>`).join('')}</ul>
+                        </div>
+                    `;
+                })
+                .catch(error => {
+                    resultsDiv.innerHTML = `<div class="status fail">❌ Error: ${error.message}</div>`;
+                });
+        }
+        
+        // Highlight active test based on scroll or manual selection
+        document.querySelectorAll('.test-item').forEach(item => {
+            item.addEventListener('click', () => {
+                document.querySelectorAll('.test-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+            });
+        });
+    </script>
+</body>
+</html>

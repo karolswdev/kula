@@ -29,6 +29,15 @@ export class PlayerController {
         // Previous jump state to detect new jump presses
         this.wasJumpPressed = false;
         
+        // Gravity-oriented coordinate system - Requirement: PROD-001 (Gravity Reorientation)
+        this.currentGravity = new CANNON.Vec3(0, -9.82, 0); // Current gravity vector
+        this.upVector = new CANNON.Vec3(0, 1, 0); // Current "up" direction (opposite of gravity)
+        this.forwardVector = new CANNON.Vec3(0, 0, -1); // Forward in local space
+        this.rightVector = new CANNON.Vec3(1, 0, 0); // Right in local space
+        
+        // Camera reference for movement direction
+        this.camera = null;
+        
         this.setupEventListeners();
         
         console.log('PlayerController::constructor - Initialized with input listeners');
@@ -104,39 +113,133 @@ export class PlayerController {
     }
     
     /**
+     * Set camera reference for movement direction
+     * @param {THREE.Camera} camera - The camera object
+     */
+    setCamera(camera) {
+        this.camera = camera;
+        console.log('PlayerController::setCamera - Camera reference set');
+    }
+    
+    /**
+     * Update gravity orientation - called by PhysicsManager
+     * Requirement: PROD-001 - Gravity Reorientation
+     * @param {CANNON.Vec3} gravityVector - The new gravity vector
+     */
+    updateGravity(gravityVector) {
+        this.currentGravity.copy(gravityVector);
+        
+        // Calculate up vector (opposite of gravity)
+        this.upVector.copy(gravityVector);
+        this.upVector.normalize();
+        this.upVector.scale(-1, this.upVector); // Invert to get "up"
+        
+        // Recalculate movement basis vectors
+        this.updateMovementBasis();
+        
+        console.log(`PlayerController::updateGravity - Gravity updated to (${gravityVector.x.toFixed(2)}, ${gravityVector.y.toFixed(2)}, ${gravityVector.z.toFixed(2)})`);
+        console.log(`  Up vector: (${this.upVector.x.toFixed(2)}, ${this.upVector.y.toFixed(2)}, ${this.upVector.z.toFixed(2)})`);
+    }
+    
+    /**
+     * Update movement basis vectors based on current gravity and camera
+     * Creates a coordinate system where movement is relative to the current "floor"
+     */
+    updateMovementBasis() {
+        // If we don't have a camera, use world-aligned defaults modified by gravity
+        if (!this.camera) {
+            // Create arbitrary forward perpendicular to up
+            const worldForward = new CANNON.Vec3(0, 0, -1);
+            const worldRight = new CANNON.Vec3(1, 0, 0);
+            
+            // If gravity is mostly vertical, use world X/Z for movement
+            if (Math.abs(this.upVector.y) > 0.9) {
+                this.forwardVector.set(0, 0, -1);
+                this.rightVector.set(1, 0, 0);
+            }
+            // If gravity is mostly horizontal in X, use Y/Z for movement
+            else if (Math.abs(this.upVector.x) > 0.9) {
+                this.forwardVector.set(0, 0, -1);
+                this.rightVector.set(0, 1, 0);
+            }
+            // If gravity is mostly horizontal in Z, use X/Y for movement
+            else if (Math.abs(this.upVector.z) > 0.9) {
+                this.forwardVector.set(1, 0, 0);
+                this.rightVector.set(0, 1, 0);
+            }
+            return;
+        }
+        
+        // Get camera forward direction
+        const cameraForward = new THREE.Vector3(0, 0, -1);
+        cameraForward.applyQuaternion(this.camera.quaternion);
+        
+        // Convert to CANNON.Vec3
+        const camForward = new CANNON.Vec3(cameraForward.x, cameraForward.y, cameraForward.z);
+        
+        // Project camera forward onto the plane perpendicular to up vector
+        // This gives us the forward direction along the current "floor"
+        const dot = camForward.dot(this.upVector);
+        this.forwardVector.copy(camForward);
+        const scaledUp = this.upVector.clone();
+        scaledUp.scale(dot, scaledUp);
+        this.forwardVector.vsub(scaledUp, this.forwardVector);
+        this.forwardVector.normalize();
+        
+        // Calculate right vector (perpendicular to forward and up)
+        this.rightVector.copy(this.forwardVector);
+        this.rightVector.cross(this.upVector, this.rightVector);
+        this.rightVector.normalize();
+        
+        console.log(`PlayerController::updateMovementBasis - Basis updated`);
+        console.log(`  Forward: (${this.forwardVector.x.toFixed(2)}, ${this.forwardVector.y.toFixed(2)}, ${this.forwardVector.z.toFixed(2)})`);
+        console.log(`  Right: (${this.rightVector.x.toFixed(2)}, ${this.rightVector.y.toFixed(2)}, ${this.rightVector.z.toFixed(2)})`);
+    }
+    
+    /**
      * Update player movement based on input
-     * Requirements: PROD-002 (Rolling), PROD-003 (Jumping)
+     * Requirements: PROD-002 (Rolling), PROD-003 (Jumping), PROD-001 (Gravity Reorientation)
      * @param {number} deltaTime - Time since last frame in seconds
      */
     update(deltaTime) {
         if (!this.physicsBody) return;
         
-        // Calculate movement vector based on input
-        const moveVector = { x: 0, z: 0 };
+        // Update movement basis in case camera has moved
+        this.updateMovementBasis();
         
-        if (this.keys.forward) moveVector.z -= 1;
-        if (this.keys.backward) moveVector.z += 1;
-        if (this.keys.left) moveVector.x -= 1;
-        if (this.keys.right) moveVector.x += 1;
+        // Calculate movement input in local space
+        let moveForward = 0;
+        let moveRight = 0;
+        
+        if (this.keys.forward) moveForward += 1;  // W key moves forward (away from camera)
+        if (this.keys.backward) moveForward -= 1; // S key moves backward (toward camera)
+        if (this.keys.left) moveRight -= 1;
+        if (this.keys.right) moveRight += 1;
         
         // Normalize diagonal movement
-        const length = Math.sqrt(moveVector.x * moveVector.x + moveVector.z * moveVector.z);
-        if (length > 0) {
-            moveVector.x /= length;
-            moveVector.z /= length;
+        const inputLength = Math.sqrt(moveForward * moveForward + moveRight * moveRight);
+        if (inputLength > 0) {
+            moveForward /= inputLength;
+            moveRight /= inputLength;
         }
         
         // Apply forces for rolling movement - Requirement: PROD-002
-        // This creates momentum-based movement with gradual acceleration/deceleration
-        if (length > 0) {
-            // Apply acceleration force
-            const force = new CANNON.Vec3(
-                moveVector.x * this.acceleration,
-                0,
-                moveVector.z * this.acceleration
-            );
-            // CANNON.js applyForce requires both force vector and world point
-            // Apply force at center of mass (body position)
+        // Calculate force in gravity-relative coordinate system
+        if (inputLength > 0) {
+            // Combine forward and right vectors based on input
+            const force = new CANNON.Vec3();
+            
+            // Add forward component
+            const forwardForce = this.forwardVector.clone();
+            forwardForce.scale(moveForward * this.acceleration, forwardForce);
+            force.vadd(forwardForce, force);
+            
+            // Add right component
+            const rightForce = this.rightVector.clone();
+            rightForce.scale(moveRight * this.acceleration, rightForce);
+            force.vadd(rightForce, force);
+            
+            // Apply force at center of mass
             this.physicsBody.applyForce(force, this.physicsBody.position);
             
             // Log position for TC-1.2 test evidence
@@ -145,43 +248,96 @@ export class PlayerController {
             }
         }
         
-        // Limit maximum velocity for control
+        // Limit maximum velocity for control (relative to current plane)
+        // Project velocity onto movement plane (perpendicular to up vector)
         const velocity = this.physicsBody.velocity;
-        const horizontalSpeed = Math.sqrt(velocity.x * velocity.x + velocity.z * velocity.z);
-        if (horizontalSpeed > this.moveSpeed) {
-            const scale = this.moveSpeed / horizontalSpeed;
-            this.physicsBody.velocity.x *= scale;
-            this.physicsBody.velocity.z *= scale;
+        const velocityOnPlane = velocity.clone();
+        const velocityAlongUp = this.upVector.dot(velocity);
+        const upComponent = this.upVector.clone();
+        upComponent.scale(velocityAlongUp, upComponent);
+        velocityOnPlane.vsub(upComponent, velocityOnPlane);
+        
+        const planeSpeed = velocityOnPlane.length();
+        if (planeSpeed > this.moveSpeed) {
+            const scale = this.moveSpeed / planeSpeed;
+            velocityOnPlane.scale(scale, velocityOnPlane);
+            // Reconstruct velocity with clamped plane component
+            this.physicsBody.velocity.copy(velocityOnPlane);
+            this.physicsBody.velocity.vadd(upComponent, this.physicsBody.velocity);
         }
         
         // Apply damping when no input (gradual deceleration)
-        if (length === 0) {
-            this.physicsBody.velocity.x *= (1 - this.deceleration * deltaTime);
-            this.physicsBody.velocity.z *= (1 - this.deceleration * deltaTime);
+        if (inputLength === 0) {
+            // Damp only the velocity component on the movement plane
+            const velocityOnPlane = this.physicsBody.velocity.clone();
+            const velocityAlongUp = this.upVector.dot(this.physicsBody.velocity);
+            const upComponent = this.upVector.clone();
+            upComponent.scale(velocityAlongUp, upComponent);
+            velocityOnPlane.vsub(upComponent, velocityOnPlane);
+            
+            // Apply damping to plane velocity
+            velocityOnPlane.scale(1 - this.deceleration * deltaTime, velocityOnPlane);
+            
+            // Reconstruct velocity
+            this.physicsBody.velocity.copy(velocityOnPlane);
+            this.physicsBody.velocity.vadd(upComponent, this.physicsBody.velocity);
         }
         
-        // Handle jumping - Requirement: PROD-003
-        // Check if on ground (check if Y position is near the expected ground level)
-        // Player radius is 0.5, floor is at Y=0, so player center should be at ~0.5 when grounded
-        this.canJump = this.physicsBody.position.y < 0.6 && Math.abs(this.physicsBody.velocity.y) < 0.1;
+        // Handle jumping - Requirements: PROD-003, PROD-001 (Gravity-relative jumping)
+        // Check if on ground using gravity-relative detection
+        this.checkGroundContact();
         
         // Detect new jump press (not held)
         const jumpPressed = this.keys.jump && !this.wasJumpPressed;
         this.wasJumpPressed = this.keys.jump;
         
         if (jumpPressed && this.canJump) {
-            // Apply upward impulse for jump
-            const jumpForce = new CANNON.Vec3(0, this.jumpImpulse, 0);
-            this.physicsBody.velocity.y = this.jumpImpulse;
+            // Apply jump impulse in the opposite direction of gravity (i.e., "up")
+            const jumpDirection = this.upVector.clone();
+            jumpDirection.scale(this.jumpImpulse, jumpDirection);
             
-            console.log(`PlayerController::jump - Applied impulse, Y velocity: ${this.jumpImpulse}`);
-            console.log(`PlayerController::jump - Starting Y position: ${this.physicsBody.position.y.toFixed(3)}`);
+            // Set velocity component in jump direction
+            const currentVelAlongUp = this.upVector.dot(this.physicsBody.velocity);
+            const upComponent = this.upVector.clone();
+            upComponent.scale(this.jumpImpulse - currentVelAlongUp, upComponent);
+            this.physicsBody.velocity.vadd(upComponent, this.physicsBody.velocity);
+            
+            console.log(`PlayerController::jump - Applied impulse in direction (${jumpDirection.x.toFixed(2)}, ${jumpDirection.y.toFixed(2)}, ${jumpDirection.z.toFixed(2)})`);
+            console.log(`PlayerController::jump - New velocity: (${this.physicsBody.velocity.x.toFixed(2)}, ${this.physicsBody.velocity.y.toFixed(2)}, ${this.physicsBody.velocity.z.toFixed(2)})`);
         }
         
-        // Log Y position during jump for TC-1.3 test evidence
-        if (!this.canJump && Math.random() < 0.2) {
-            console.log(`PlayerController::jumping - Y position: ${this.physicsBody.position.y.toFixed(3)}, Y velocity: ${this.physicsBody.velocity.y.toFixed(3)}`);
+        // Log position during jump for debugging
+        if (!this.canJump && Math.random() < 0.1) {
+            const vel = this.physicsBody.velocity;
+            const pos = this.physicsBody.position;
+            console.log(`PlayerController::jumping - Pos: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)}), Vel: (${vel.x.toFixed(2)}, ${vel.y.toFixed(2)}, ${vel.z.toFixed(2)})`);
         }
+    }
+    
+    /**
+     * Check if player is in contact with ground (relative to current gravity)
+     * Requirement: PROD-001 - Gravity-relative ground detection
+     */
+    checkGroundContact() {
+        if (!this.physicsBody) {
+            this.canJump = false;
+            return;
+        }
+        
+        // Simple approach: check velocity component along gravity direction
+        // If we're moving in gravity direction and slow enough, we're likely on ground
+        const gravityNormalized = this.currentGravity.clone();
+        gravityNormalized.normalize();
+        
+        // Velocity component in gravity direction (positive = falling)
+        const velocityAlongGravity = gravityNormalized.dot(this.physicsBody.velocity);
+        
+        // Check if we're not moving much in gravity direction
+        // This works for any gravity orientation
+        this.canJump = Math.abs(velocityAlongGravity) < 0.5;
+        
+        // Additional check: ray cast would be more accurate but this is simpler for now
+        // Could be enhanced with actual collision detection in the future
     }
     
     /**
@@ -202,5 +358,11 @@ export class PlayerController {
         this.keys.right = false;
         this.keys.jump = false;
         this.wasJumpPressed = false;
+        
+        // Reset gravity to default
+        this.currentGravity.set(0, -9.82, 0);
+        this.upVector.set(0, 1, 0);
+        this.forwardVector.set(0, 0, -1);
+        this.rightVector.set(1, 0, 0);
     }
 }
