@@ -1,6 +1,6 @@
 /**
  * Main Game class - orchestrates the game loop and coordinates all systems
- * Requirements: TECH-P-002, ARCH-001
+ * Requirements: TECH-P-002, ARCH-001, PROD-012
  */
 
 import { PlayerController } from '../player/PlayerController.js';
@@ -9,6 +9,7 @@ import { CameraController } from '../camera/CameraController.js';
 import { LevelManager } from '../level/LevelManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { GameState } from '../game/GameState.js';
+import { AudioManager } from '../audio/AudioManager.js';
 
 export class Game {
     constructor() {
@@ -24,6 +25,7 @@ export class Game {
         this.cameraController = null;
         this.levelManager = null;
         this.uiManager = null;
+        this.audioManager = null; // Requirement: PROD-012
         
         // Container for the canvas
         this.container = document.getElementById('game-container');
@@ -75,11 +77,39 @@ export class Game {
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
         
-        // Listen for level change messages (for testing)
+        // Listen for messages from parent window (for testing and iframe integration)
         window.addEventListener('message', (event) => {
+            // Handle level changes
             if (event.data.type === 'changeLevel') {
                 console.log('Game::initialize - Received level change request:', event.data.level);
                 this.loadLevel(event.data.level);
+            }
+            
+            // Handle forwarded keyboard events from parent frame
+            if (event.data.type === 'keydown') {
+                const evt = new KeyboardEvent('keydown', {
+                    key: event.data.key,
+                    code: event.data.code,
+                    shiftKey: event.data.shiftKey,
+                    ctrlKey: event.data.ctrlKey,
+                    altKey: event.data.altKey,
+                    metaKey: event.data.metaKey,
+                    bubbles: true,
+                    cancelable: true
+                });
+                document.dispatchEvent(evt);
+            } else if (event.data.type === 'keyup') {
+                const evt = new KeyboardEvent('keyup', {
+                    key: event.data.key,
+                    code: event.data.code,
+                    shiftKey: event.data.shiftKey,
+                    ctrlKey: event.data.ctrlKey,
+                    altKey: event.data.altKey,
+                    metaKey: event.data.metaKey,
+                    bubbles: true,
+                    cancelable: true
+                });
+                document.dispatchEvent(evt);
             }
         });
         
@@ -129,6 +159,10 @@ export class Game {
         
         // Initialize UI manager - Requirement: USER-002
         this.uiManager = new UIManager();
+        
+        // Initialize audio manager - Requirement: PROD-012
+        this.audioManager = new AudioManager();
+        this.audioManager.loadSounds();
         
         console.log('Game::initializeSystems - All systems initialized');
     }
@@ -219,11 +253,12 @@ export class Game {
                 }
             }));
             
-            // Expose level manager and game state to window for testing
+            // Expose game systems to window for testing and audio hooks
             window.game = window.game || {};
             window.game.levelManager = this.levelManager;
             window.game.gameState = this.gameState;
             window.game.uiManager = this.uiManager;
+            window.game.audioManager = this.audioManager;
             
         } catch (error) {
             console.error('Game::loadLevel - Failed to load level:', error);
@@ -295,6 +330,12 @@ export class Game {
                 // Check for collectibles and objectives - Requirements: PROD-004, PROD-005
                 if (this.levelManager) {
                     this.levelManager.checkCollectibles(this.playerMesh.position);
+                    
+                    // Check for hazard collisions - Requirement: PROD-007
+                    const hazardCollision = this.levelManager.checkHazardCollision(this.playerMesh.position);
+                    if (hazardCollision && hazardCollision.damage) {
+                        this.handleHazardCollision(hazardCollision);
+                    }
                 }
                 
                 // Check for fall condition - Requirement: PROD-006
@@ -338,6 +379,51 @@ export class Game {
     }
     
     /**
+     * Handle hazard collision - lose life and reset position
+     * Requirement: PROD-007 - Failure Condition: Hazards
+     * @param {Object} collisionData - Data about the hazard collision
+     */
+    handleHazardCollision(collisionData) {
+        if (this.gameState.isRespawning) return;
+        
+        console.log('Game::handleHazardCollision - Player hit hazard:', collisionData);
+        
+        // Set respawning flag to prevent multiple triggers
+        this.gameState.setRespawning(true);
+        
+        // Play hazard hit sound - Requirement: PROD-012
+        if (this.audioManager) {
+            this.audioManager.playSound('hazardHit');
+        }
+        
+        // Lose a life through GameState manager
+        const isGameOver = this.gameState.loseLife(collisionData.cause || 'hazard');
+        
+        // Visual feedback - red flash or particle effect could go here
+        if (this.playerMesh) {
+            // Temporary red tint
+            const originalColor = this.playerMesh.material.color.getHex();
+            this.playerMesh.material.color.setHex(0xFF0000);
+            setTimeout(() => {
+                this.playerMesh.material.color.setHex(originalColor);
+            }, 200);
+        }
+        
+        // If game over, let the GameState event handler deal with it
+        if (isGameOver) {
+            return;
+        }
+        
+        // Reset player position
+        this.resetPlayerPosition();
+        
+        // Clear respawning flag after a short delay
+        setTimeout(() => {
+            this.gameState.setRespawning(false);
+        }, 500);
+    }
+    
+    /**
      * Handle player falling - lose life and reset position
      * Requirements: PROD-006, PROD-008 - Lives System
      */
@@ -348,6 +434,11 @@ export class Game {
         
         // Set respawning flag to prevent multiple triggers
         this.gameState.setRespawning(true);
+        
+        // Play fall sound - Requirement: PROD-012
+        if (this.audioManager) {
+            this.audioManager.playSound('fall');
+        }
         
         // Lose a life through GameState manager
         const isGameOver = this.gameState.loseLife('fall');

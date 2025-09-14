@@ -129,7 +129,7 @@ export class UIManager {
         
         // Listen for game over
         window.addEventListener('gameOver', (event) => {
-            this.showMessage(`GAME OVER\nFinal Score: ${event.detail.finalScore}`, 5000);
+            this.showGameOverScreen(event.detail.finalScore);
         });
     }
     
@@ -300,5 +300,97 @@ export class UIManager {
         if (this.hudElement) {
             this.hudElement.style.display = 'block';
         }
+    }
+    
+    /**
+     * Show game over screen with restart button
+     * @param {number} finalScore - Final score achieved
+     */
+    showGameOverScreen(finalScore) {
+        // Create game over overlay
+        const gameOverOverlay = document.createElement('div');
+        gameOverOverlay.id = 'gameOverOverlay';
+        gameOverOverlay.style.cssText = `
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            animation: fadeIn 0.5s ease-in;
+        `;
+        
+        gameOverOverlay.innerHTML = `
+            <div style="
+                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                padding: 40px 60px;
+                border-radius: 20px;
+                text-align: center;
+                box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+                animation: slideIn 0.5s ease-out;
+            ">
+                <h1 style="
+                    color: #FFD700;
+                    font-size: 48px;
+                    margin: 0 0 20px 0;
+                    text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+                ">GAME OVER</h1>
+                <p style="
+                    color: white;
+                    font-size: 28px;
+                    margin: 20px 0;
+                ">Final Score: <span style="color: #FFD700;">${finalScore}</span></p>
+                <button id="restartButton" style="
+                    background: white;
+                    color: #667eea;
+                    border: none;
+                    padding: 15px 40px;
+                    font-size: 20px;
+                    font-weight: bold;
+                    border-radius: 10px;
+                    cursor: pointer;
+                    margin-top: 20px;
+                    transition: all 0.3s ease;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+                ">RESTART</button>
+            </div>
+        `;
+        
+        // Add animations if not already defined
+        if (!document.getElementById('game-over-animations')) {
+            const style = document.createElement('style');
+            style.id = 'game-over-animations';
+            style.textContent = `
+                @keyframes fadeIn {
+                    from { opacity: 0; }
+                    to { opacity: 1; }
+                }
+                @keyframes slideIn {
+                    from { transform: translateY(-50px); opacity: 0; }
+                    to { transform: translateY(0); opacity: 1; }
+                }
+                #restartButton:hover {
+                    transform: scale(1.1);
+                    box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+                }
+            `;
+            document.head.appendChild(style);
+        }
+        
+        document.body.appendChild(gameOverOverlay);
+        
+        // Add restart button functionality
+        document.getElementById('restartButton').addEventListener('click', () => {
+            // Remove the overlay
+            gameOverOverlay.remove();
+            
+            // Reload the current page to restart the game
+            window.location.reload();
+        });
     }
 }

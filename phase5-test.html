@@ -1,0 +1,458 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 5 Test - Hazards, Moving Platforms & Audio</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #1a1a1a;
+            color: #fff;
+            overflow: hidden;
+        }
+        
+        .container {
+            display: flex;
+            height: 100vh;
+        }
+        
+        .game-frame {
+            flex: 1;
+            position: relative;
+        }
+        
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+        }
+        
+        .test-panel {
+            width: 400px;
+            background: #2a2a2a;
+            padding: 20px;
+            overflow-y: auto;
+            box-shadow: -5px 0 20px rgba(0,0,0,0.5);
+        }
+        
+        h1 {
+            margin: 0 0 20px 0;
+            font-size: 20px;
+            color: #00ff00;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+        
+        .test-section {
+            margin-bottom: 30px;
+            padding: 15px;
+            background: #333;
+            border-radius: 5px;
+            border-left: 3px solid #00ff00;
+        }
+        
+        .test-section h2 {
+            margin: 0 0 15px 0;
+            font-size: 16px;
+            color: #00ffff;
+        }
+        
+        button {
+            display: block;
+            width: 100%;
+            padding: 10px;
+            margin: 5px 0;
+            background: #444;
+            color: #fff;
+            border: 1px solid #666;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #555;
+            border-color: #00ff00;
+            transform: translateX(2px);
+        }
+        
+        button:active {
+            background: #333;
+        }
+        
+        .console-output {
+            background: #000;
+            color: #0f0;
+            padding: 10px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            height: 150px;
+            overflow-y: auto;
+            margin-top: 10px;
+            border: 1px solid #00ff00;
+        }
+        
+        .status {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 3px;
+            font-size: 14px;
+        }
+        
+        .status.pass {
+            background: #0a5f0a;
+            border: 1px solid #0f0;
+        }
+        
+        .status.fail {
+            background: #5f0a0a;
+            border: 1px solid #f00;
+        }
+        
+        .status.info {
+            background: #0a3f5f;
+            border: 1px solid #0ff;
+        }
+        
+        .controls-info {
+            background: #3a3a3a;
+            padding: 10px;
+            border-radius: 3px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .feature-tag {
+            display: inline-block;
+            padding: 2px 8px;
+            background: #00ff00;
+            color: #000;
+            border-radius: 3px;
+            font-size: 11px;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="game-frame">
+            <iframe id="gameFrame" src="index.html"></iframe>
+        </div>
+        
+        <div class="test-panel">
+            <h1>Phase 5 Test Suite</h1>
+            
+            <div class="controls-info">
+                <strong>Game Controls:</strong><br>
+                WASD/Arrows - Move<br>
+                Space - Jump<br>
+                Q/E - Rotate Camera<br>
+                Mouse Drag - Look Around<br>
+                Scroll - Zoom
+            </div>
+            
+            <!-- TC-5.1: Hazard Collision Test -->
+            <div class="test-section">
+                <h2>
+                    <span class="feature-tag">TC-5.1</span>
+                    Hazard Collision Test
+                </h2>
+                <p>Requirement: PROD-007 - Failure Condition: Hazards</p>
+                <button onclick="testHazardCollision()">Test Hazard Collision</button>
+                <button onclick="teleportToHazard()">Teleport to Nearest Hazard</button>
+                <button onclick="listHazards()">List All Hazards</button>
+                <div id="hazardStatus" class="status info" style="display:none;"></div>
+            </div>
+            
+            <!-- TC-5.2: Moving Platform Test -->
+            <div class="test-section">
+                <h2>
+                    <span class="feature-tag">TC-5.2</span>
+                    Moving Platform Test
+                </h2>
+                <p>Requirement: PROD-011 - Level Structure: Modular Blocks</p>
+                <button onclick="testMovingPlatforms()">Test Moving Platforms</button>
+                <button onclick="teleportToPlatform()">Teleport to Moving Platform</button>
+                <button onclick="trackPlatformMovement()">Track Platform Movement</button>
+                <div id="platformStatus" class="status info" style="display:none;"></div>
+            </div>
+            
+            <!-- TC-5.3: Audio System Test -->
+            <div class="test-section">
+                <h2>
+                    <span class="feature-tag">TC-5.3</span>
+                    Audio System Test
+                </h2>
+                <p>Requirement: PROD-012 - Audio: Sound Effects</p>
+                <button onclick="testAudioSystem()">Test Audio System</button>
+                <button onclick="playTestSound('jump')">Play Jump Sound</button>
+                <button onclick="playTestSound('keyCollect')">Play Key Collect Sound</button>
+                <button onclick="playTestSound('hazardHit')">Play Hazard Hit Sound</button>
+                <button onclick="playTestSound('fall')">Play Fall Sound</button>
+                <button onclick="toggleMute()">Toggle Mute</button>
+                <div id="audioStatus" class="status info" style="display:none;"></div>
+            </div>
+            
+            <!-- Console Output -->
+            <div class="test-section">
+                <h2>Console Output</h2>
+                <div id="console" class="console-output"></div>
+                <button onclick="clearConsole()">Clear Console</button>
+            </div>
+        </div>
+    </div>
+    
+    <script>
+        const gameFrame = document.getElementById('gameFrame');
+        const consoleDiv = document.getElementById('console');
+        
+        // Wait for game to load
+        gameFrame.onload = () => {
+            log('Game loaded. Waiting for initialization...');
+            
+            setTimeout(() => {
+                const gameWindow = gameFrame.contentWindow;
+                if (gameWindow.game) {
+                    log('✅ Game initialized successfully');
+                    log(`Lives: ${gameWindow.game.gameState.getState().lives}`);
+                    log(`Score: ${gameWindow.game.gameState.getState().score}`);
+                } else {
+                    log('❌ Game initialization failed');
+                }
+            }, 2000);
+        };
+        
+        function log(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            consoleDiv.innerHTML += `[${timestamp}] ${message}\n`;
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        }
+        
+        function clearConsole() {
+            consoleDiv.innerHTML = '';
+        }
+        
+        // TC-5.1: Hazard Collision Tests
+        function testHazardCollision() {
+            const gameWindow = gameFrame.contentWindow;
+            const status = document.getElementById('hazardStatus');
+            status.style.display = 'block';
+            
+            if (!gameWindow.game) {
+                status.className = 'status fail';
+                status.textContent = '❌ Game not initialized';
+                return;
+            }
+            
+            const hazards = gameWindow.game.levelManager.hazards;
+            if (hazards.size === 0) {
+                status.className = 'status fail';
+                status.textContent = '❌ No hazards found in level';
+                log('No hazards found in level');
+                return;
+            }
+            
+            const initialLives = gameWindow.game.gameState.getState().lives;
+            log(`Initial lives: ${initialLives}`);
+            log(`Found ${hazards.size} hazards in level`);
+            
+            // Get first hazard
+            const firstHazard = Array.from(hazards.values())[0];
+            log(`Testing collision with ${firstHazard.type} hazard at (${firstHazard.position.x}, ${firstHazard.position.y}, ${firstHazard.position.z})`);
+            
+            // Move player to hazard
+            const playerBody = gameWindow.game.physicsManager.getPlayerBody();
+            if (playerBody) {
+                playerBody.position.set(firstHazard.position.x, firstHazard.position.y + 1, firstHazard.position.z);
+                playerBody.velocity.set(0, -5, 0);
+                
+                setTimeout(() => {
+                    const currentLives = gameWindow.game.gameState.getState().lives;
+                    if (currentLives < initialLives) {
+                        status.className = 'status pass';
+                        status.textContent = `✅ PASS: Life lost on hazard collision (${initialLives} → ${currentLives})`;
+                        log(`✅ TC-5.1 PASSED: Hazard collision detected, life lost`);
+                    } else {
+                        status.className = 'status fail';
+                        status.textContent = '❌ FAIL: No life lost on hazard collision';
+                        log('❌ TC-5.1 FAILED: Hazard collision not detected');
+                    }
+                }, 1000);
+            }
+        }
+        
+        function teleportToHazard() {
+            const gameWindow = gameFrame.contentWindow;
+            if (!gameWindow.game) return;
+            
+            const hazards = gameWindow.game.levelManager.hazards;
+            if (hazards.size > 0) {
+                const firstHazard = Array.from(hazards.values())[0];
+                const playerBody = gameWindow.game.physicsManager.getPlayerBody();
+                if (playerBody) {
+                    // Teleport near hazard (not on it)
+                    playerBody.position.set(firstHazard.position.x + 2, firstHazard.position.y + 1, firstHazard.position.z);
+                    playerBody.velocity.set(0, 0, 0);
+                    log(`Teleported near ${firstHazard.type} hazard`);
+                }
+            }
+        }
+        
+        function listHazards() {
+            const gameWindow = gameFrame.contentWindow;
+            if (!gameWindow.game) return;
+            
+            const hazards = gameWindow.game.levelManager.hazards;
+            log(`\n=== Hazards in Level (${hazards.size}) ===`);
+            hazards.forEach((hazard, id) => {
+                log(`${id}: ${hazard.type} at (${hazard.position.x}, ${hazard.position.y}, ${hazard.position.z})`);
+            });
+        }
+        
+        // TC-5.2: Moving Platform Tests
+        function testMovingPlatforms() {
+            const gameWindow = gameFrame.contentWindow;
+            const status = document.getElementById('platformStatus');
+            status.style.display = 'block';
+            
+            if (!gameWindow.game) {
+                status.className = 'status fail';
+                status.textContent = '❌ Game not initialized';
+                return;
+            }
+            
+            const platforms = gameWindow.game.levelManager.movingPlatforms;
+            if (platforms.size === 0) {
+                status.className = 'status fail';
+                status.textContent = '❌ No moving platforms found';
+                log('No moving platforms found in level');
+                return;
+            }
+            
+            log(`Found ${platforms.size} moving platforms`);
+            
+            const firstPlatform = Array.from(platforms.values())[0];
+            const initialPos = {
+                x: firstPlatform.currentPosition.x,
+                y: firstPlatform.currentPosition.y,
+                z: firstPlatform.currentPosition.z
+            };
+            
+            log(`Platform "${firstPlatform.id}" initial position: (${initialPos.x.toFixed(2)}, ${initialPos.y.toFixed(2)}, ${initialPos.z.toFixed(2)})`);
+            
+            setTimeout(() => {
+                const newPos = firstPlatform.currentPosition;
+                const distance = Math.sqrt(
+                    Math.pow(newPos.x - initialPos.x, 2) +
+                    Math.pow(newPos.y - initialPos.y, 2) +
+                    Math.pow(newPos.z - initialPos.z, 2)
+                );
+                
+                if (distance > 0.1) {
+                    status.className = 'status pass';
+                    status.textContent = `✅ PASS: Platform moved ${distance.toFixed(2)} units`;
+                    log(`✅ TC-5.2 PASSED: Platform moved ${distance.toFixed(2)} units`);
+                } else {
+                    status.className = 'status fail';
+                    status.textContent = '❌ FAIL: Platform not moving';
+                    log('❌ TC-5.2 FAILED: Platform not moving');
+                }
+            }, 2000);
+        }
+        
+        function teleportToPlatform() {
+            const gameWindow = gameFrame.contentWindow;
+            if (!gameWindow.game) return;
+            
+            const platforms = gameWindow.game.levelManager.movingPlatforms;
+            if (platforms.size > 0) {
+                const firstPlatform = Array.from(platforms.values())[0];
+                const playerBody = gameWindow.game.physicsManager.getPlayerBody();
+                if (playerBody) {
+                    playerBody.position.set(
+                        firstPlatform.currentPosition.x,
+                        firstPlatform.currentPosition.y + 1,
+                        firstPlatform.currentPosition.z
+                    );
+                    playerBody.velocity.set(0, 0, 0);
+                    log(`Teleported to moving platform "${firstPlatform.id}"`);
+                }
+            }
+        }
+        
+        function trackPlatformMovement() {
+            const gameWindow = gameFrame.contentWindow;
+            if (!gameWindow.game) return;
+            
+            const platforms = gameWindow.game.levelManager.movingPlatforms;
+            if (platforms.size > 0) {
+                const firstPlatform = Array.from(platforms.values())[0];
+                
+                let count = 0;
+                const interval = setInterval(() => {
+                    const pos = firstPlatform.currentPosition;
+                    log(`Platform position: (${pos.x.toFixed(2)}, ${pos.y.toFixed(2)}, ${pos.z.toFixed(2)})`);
+                    
+                    count++;
+                    if (count >= 5) {
+                        clearInterval(interval);
+                    }
+                }, 500);
+            }
+        }
+        
+        // TC-5.3: Audio System Tests
+        function testAudioSystem() {
+            const gameWindow = gameFrame.contentWindow;
+            const status = document.getElementById('audioStatus');
+            status.style.display = 'block';
+            
+            if (!gameWindow.game || !gameWindow.game.audioManager) {
+                status.className = 'status fail';
+                status.textContent = '❌ AudioManager not initialized';
+                return;
+            }
+            
+            const audioManager = gameWindow.game.audioManager;
+            const soundCount = Object.keys(audioManager.sounds).length;
+            
+            if (soundCount > 0) {
+                status.className = 'status pass';
+                status.textContent = `✅ PASS: AudioManager loaded with ${soundCount} sounds`;
+                log(`✅ TC-5.3 PASSED: AudioManager initialized with ${soundCount} sounds`);
+                
+                // Test sound playback
+                log('Testing sound playback...');
+                audioManager.playSound('jump');
+                log('Jump sound triggered (placeholder tone)');
+            } else {
+                status.className = 'status fail';
+                status.textContent = '❌ FAIL: No sounds loaded';
+                log('❌ TC-5.3 FAILED: No sounds loaded');
+            }
+        }
+        
+        function playTestSound(soundName) {
+            const gameWindow = gameFrame.contentWindow;
+            if (gameWindow.game && gameWindow.game.audioManager) {
+                gameWindow.game.audioManager.playSound(soundName);
+                log(`Playing ${soundName} sound`);
+            }
+        }
+        
+        function toggleMute() {
+            const gameWindow = gameFrame.contentWindow;
+            if (gameWindow.game && gameWindow.game.audioManager) {
+                const audioManager = gameWindow.game.audioManager;
+                audioManager.setMuted(!audioManager.muted);
+                log(`Audio ${audioManager.muted ? 'muted' : 'unmuted'}`);
+            }
+        }
+    </script>
+</body>
+</html>

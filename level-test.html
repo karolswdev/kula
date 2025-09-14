@@ -95,11 +95,47 @@
             font-family: monospace;
             font-weight: bold;
         }
+        .focus-indicator {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(0, 0, 0, 0.8);
+            color: white;
+            padding: 20px 40px;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            z-index: 1000;
+            pointer-events: none;
+            display: none;
+            animation: fadeInOut 2s ease-in-out;
+        }
+        @keyframes fadeInOut {
+            0%, 100% { opacity: 0; }
+            50% { opacity: 1; }
+        }
+        .game-frame.focused {
+            border-color: #ffd700;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3), 0 0 20px rgba(255, 215, 0, 0.5);
+        }
+        .focus-hint {
+            text-align: center;
+            margin: 10px 0;
+            padding: 10px;
+            background: rgba(255, 215, 0, 0.2);
+            border-radius: 8px;
+            font-size: 14px;
+        }
     </style>
 </head>
 <body>
     <div class="container">
         <h1>🎮 Kula Browser - Level Testing Suite</h1>
+        
+        <div class="focus-hint">
+            💡 <strong>Tip:</strong> The game automatically captures keyboard input. Just use WASD to move, Q/E for camera, and Space to jump!
+        </div>
         
         <div class="level-selector">
             <button class="level-btn active" onclick="loadLevel('level-1')">
@@ -114,6 +150,10 @@
         </div>
         
         <iframe id="gameFrame" class="game-frame" src="index.html"></iframe>
+        
+        <div id="focusIndicator" class="focus-indicator">
+            Click on the game to focus
+        </div>
         
         <div class="level-info">
             <h2>Current Level: Gravity Discovery</h2>
@@ -161,6 +201,9 @@
             }
         };
         
+        // Track iframe focus state
+        let iframeFocused = false;
+        
         function loadLevel(levelName) {
             // Update button states
             document.querySelectorAll('.level-btn').forEach(btn => {
@@ -181,7 +224,121 @@
                 type: 'changeLevel',
                 level: `/levels/${levelName}.json`
             }, '*');
+            
+            // Refocus the iframe after level change
+            setTimeout(() => {
+                focusIframe();
+            }, 100);
         }
+        
+        function focusIframe() {
+            const iframe = document.getElementById('gameFrame');
+            iframe.focus();
+            if (iframe.contentWindow) {
+                iframe.contentWindow.focus();
+            }
+            updateFocusIndicator(true);
+        }
+        
+        function updateFocusIndicator(hasFocus) {
+            const iframe = document.getElementById('gameFrame');
+            const indicator = document.getElementById('focusIndicator');
+            
+            iframeFocused = hasFocus;
+            
+            if (hasFocus) {
+                iframe.classList.add('focused');
+                indicator.style.display = 'none';
+            } else {
+                iframe.classList.remove('focused');
+                // Don't show the indicator on initial load
+                if (document.hasFocus()) {
+                    indicator.style.display = 'block';
+                    setTimeout(() => {
+                        indicator.style.display = 'none';
+                    }, 2000);
+                }
+            }
+        }
+        
+        // Initialize iframe focus handling
+        window.addEventListener('load', () => {
+            const iframe = document.getElementById('gameFrame');
+            
+            // Auto-focus on load
+            iframe.onload = function() {
+                console.log('Iframe loaded, auto-focusing...');
+                setTimeout(() => {
+                    focusIframe();
+                }, 500);
+            };
+            
+            // Click to focus
+            iframe.addEventListener('click', () => {
+                focusIframe();
+            });
+            
+            // Detect focus changes
+            iframe.addEventListener('focus', () => {
+                updateFocusIndicator(true);
+            });
+            
+            iframe.addEventListener('blur', () => {
+                // Keep visual indicator that it's focused for keyboard forwarding
+                // Only show unfocused if user clicks outside
+            });
+        });
+        
+        // Forward keyboard events to iframe
+        document.addEventListener('keydown', (e) => {
+            // Don't forward if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            const iframe = document.getElementById('gameFrame');
+            if (!iframe || !iframe.contentWindow) return;
+            
+            // Forward to iframe
+            iframe.contentWindow.postMessage({
+                type: 'keydown',
+                key: e.key,
+                code: e.code,
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                metaKey: e.metaKey
+            }, '*');
+            
+            // Prevent default for game keys
+            const gameKeys = ['w', 'a', 's', 'd', 'q', 'e', ' ', 'W', 'A', 'S', 'D', 'Q', 'E'];
+            if (gameKeys.includes(e.key) || e.key === 'Shift') {
+                e.preventDefault();
+            }
+        });
+        
+        document.addEventListener('keyup', (e) => {
+            // Don't forward if user is typing in an input field
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+            
+            const iframe = document.getElementById('gameFrame');
+            if (!iframe || !iframe.contentWindow) return;
+            
+            // Forward to iframe
+            iframe.contentWindow.postMessage({
+                type: 'keyup',
+                key: e.key,
+                code: e.code,
+                shiftKey: e.shiftKey,
+                ctrlKey: e.ctrlKey,
+                altKey: e.altKey,
+                metaKey: e.metaKey
+            }, '*');
+            
+            // Prevent default for game keys
+            const gameKeys = ['w', 'a', 's', 'd', 'q', 'e', ' ', 'W', 'A', 'S', 'D', 'Q', 'E'];
+            if (gameKeys.includes(e.key) || e.key === 'Shift') {
+                e.preventDefault();
+            }
+        });
         
         // Listen for messages from the game
         window.addEventListener('message', (event) => {

@@ -302,6 +302,11 @@ export class PlayerController {
             upComponent.scale(this.jumpImpulse - currentVelAlongUp, upComponent);
             this.physicsBody.velocity.vadd(upComponent, this.physicsBody.velocity);
             
+            // Play jump sound - Requirement: PROD-012
+            if (window.game?.audioManager) {
+                window.game.audioManager.playSound('jump');
+            }
+            
             console.log(`PlayerController::jump - Applied impulse in direction (${jumpDirection.x.toFixed(2)}, ${jumpDirection.y.toFixed(2)}, ${jumpDirection.z.toFixed(2)})`);
             console.log(`PlayerController::jump - New velocity: (${this.physicsBody.velocity.x.toFixed(2)}, ${this.physicsBody.velocity.y.toFixed(2)}, ${this.physicsBody.velocity.z.toFixed(2)})`);
         }

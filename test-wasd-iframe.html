@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WASD Control Test - Iframe Focus Issue</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: Arial, sans-serif;
+            background: #2c3e50;
+            color: white;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: #3498db;
+        }
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+        }
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            background: rgba(0,0,0,0.3);
+            border-radius: 4px;
+        }
+        .status.success {
+            border-left: 4px solid #2ecc71;
+        }
+        .status.warning {
+            border-left: 4px solid #f39c12;
+        }
+        .status.error {
+            border-left: 4px solid #e74c3c;
+        }
+        button {
+            padding: 10px 20px;
+            margin: 5px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        #keyLog {
+            background: black;
+            color: #0f0;
+            padding: 10px;
+            font-family: monospace;
+            height: 150px;
+            overflow-y: auto;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎮 WASD Control Test - Iframe Focus Diagnosis</h1>
+        
+        <div class="test-section">
+            <h2>Direct Window Test</h2>
+            <p>Press WASD keys here. They should be captured by this window.</p>
+            <div id="mainKeyLog" class="status">Waiting for key press...</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Iframe Game Test</h2>
+            <p>Click inside the game below and try WASD controls.</p>
+            <button onclick="focusIframe()">Force Focus on Game</button>
+            <button onclick="testIframeAccess()">Test Iframe Access</button>
+            <button onclick="simulateKeyPress()">Simulate WASD in Iframe</button>
+            <iframe id="gameFrame" src="index.html"></iframe>
+            
+            <div id="iframeStatus" class="status warning">
+                ⚠️ KNOWN ISSUE: WASD controls may not work in iframe due to focus issues.
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Key Event Monitor</h2>
+            <div id="keyLog"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Diagnosis Results</h2>
+            <div id="diagnosis"></div>
+        </div>
+    </div>
+    
+    <script>
+        const keyLog = document.getElementById('keyLog');
+        const mainKeyLog = document.getElementById('mainKeyLog');
+        const diagnosis = document.getElementById('diagnosis');
+        const gameFrame = document.getElementById('gameFrame');
+        let logLines = [];
+        
+        function addLog(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = `[${timestamp}] ${message}`;
+            logLines.push(logEntry);
+            if (logLines.length > 20) logLines.shift();
+            keyLog.innerHTML = logLines.join('<br>');
+            keyLog.scrollTop = keyLog.scrollHeight;
+        }
+        
+        // Monitor main window key events
+        window.addEventListener('keydown', (e) => {
+            if (['W', 'A', 'S', 'D'].includes(e.key.toUpperCase())) {
+                mainKeyLog.textContent = `Main window received: ${e.key.toUpperCase()} key`;
+                mainKeyLog.className = 'status success';
+                addLog(`Main window: ${e.key.toUpperCase()} pressed`);
+            }
+        });
+        
+        // Try to monitor iframe events (may be blocked by same-origin policy)
+        gameFrame.addEventListener('load', () => {
+            try {
+                const iframeWindow = gameFrame.contentWindow;
+                const iframeDoc = gameFrame.contentDocument;
+                
+                // Check if we can access iframe
+                if (iframeWindow && iframeDoc) {
+                    addLog('✅ Iframe access successful', 'success');
+                    
+                    // Try to add event listener to iframe
+                    iframeWindow.addEventListener('keydown', (e) => {
+                        if (['W', 'A', 'S', 'D'].includes(e.key.toUpperCase())) {
+                            addLog(`Iframe: ${e.key.toUpperCase()} pressed`, 'success');
+                        }
+                    });
+                    
+                    // Check if game is initialized
+                    setTimeout(() => {
+                        if (iframeWindow.game) {
+                            addLog('✅ Game object found in iframe', 'success');
+                            
+                            // Check player controller
+                            if (iframeWindow.game.playerController) {
+                                addLog('✅ PlayerController found', 'success');
+                                
+                                // Monitor key states
+                                setInterval(() => {
+                                    const keys = iframeWindow.game.playerController.keys;
+                                    const activeKeys = [];
+                                    if (keys.forward) activeKeys.push('W');
+                                    if (keys.backward) activeKeys.push('S');
+                                    if (keys.left) activeKeys.push('A');
+                                    if (keys.right) activeKeys.push('D');
+                                    
+                                    if (activeKeys.length > 0) {
+                                        document.getElementById('iframeStatus').innerHTML = 
+                                            `✅ Active keys in game: ${activeKeys.join(', ')}`;
+                                        document.getElementById('iframeStatus').className = 'status success';
+                                    }
+                                }, 100);
+                            }
+                        } else {
+                            addLog('⚠️ Game object not found', 'warning');
+                        }
+                    }, 2000);
+                }
+            } catch (e) {
+                addLog(`❌ Iframe access error: ${e.message}`, 'error');
+            }
+        });
+        
+        function focusIframe() {
+            gameFrame.focus();
+            gameFrame.contentWindow.focus();
+            
+            // Try to click on the canvas inside the iframe
+            try {
+                const canvas = gameFrame.contentDocument.getElementById('game-canvas');
+                if (canvas) {
+                    canvas.click();
+                    canvas.focus();
+                    addLog('✅ Focused on game canvas', 'success');
+                } else {
+                    addLog('⚠️ Canvas not found', 'warning');
+                }
+            } catch (e) {
+                addLog(`❌ Focus error: ${e.message}`, 'error');
+            }
+        }
+        
+        function testIframeAccess() {
+            try {
+                const iframeWindow = gameFrame.contentWindow;
+                const hasGame = !!iframeWindow.game;
+                const hasController = hasGame && !!iframeWindow.game.playerController;
+                
+                diagnosis.innerHTML = `
+                    <div class="status ${hasGame ? 'success' : 'error'}">
+                        Game Object: ${hasGame ? '✅ Found' : '❌ Not Found'}
+                    </div>
+                    <div class="status ${hasController ? 'success' : 'error'}">
+                        PlayerController: ${hasController ? '✅ Found' : '❌ Not Found'}
+                    </div>
+                    <div class="status warning">
+                        <strong>Root Cause:</strong> The iframe creates a separate window context.
+                        Event listeners attached to 'window' in PlayerController.js only listen
+                        to the iframe's window, not the parent window. When the iframe doesn't
+                        have focus, key events go to the parent window instead.
+                    </div>
+                    <div class="status success">
+                        <strong>Solution:</strong> Click inside the game canvas to give it focus,
+                        or open the game directly (not in an iframe) for best experience.
+                    </div>
+                `;
+            } catch (e) {
+                diagnosis.innerHTML = `<div class="status error">Error: ${e.message}</div>`;
+            }
+        }
+        
+        function simulateKeyPress() {
+            try {
+                const iframeWindow = gameFrame.contentWindow;
+                
+                // Create and dispatch keyboard events
+                ['keydown', 'keyup'].forEach((eventType, index) => {
+                    setTimeout(() => {
+                        const event = new KeyboardEvent(eventType, {
+                            key: 'w',
+                            code: 'KeyW',
+                            bubbles: true,
+                            cancelable: true
+                        });
+                        iframeWindow.dispatchEvent(event);
+                        addLog(`Simulated ${eventType} for W key`, 'info');
+                    }, index * 500);
+                });
+            } catch (e) {
+                addLog(`❌ Simulation error: ${e.message}`, 'error');
+            }
+        }
+        
+        // Initial diagnosis
+        setTimeout(() => {
+            testIframeAccess();
+        }, 3000);
+    </script>
+</body>
+</html>

@@ -1,9 +1,11 @@
 /**
  * LevelManager - Handles loading and management of game levels from JSON data
- * Requirements: ARCH-002 (Data-Driven Levels), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring)
+ * Requirements: ARCH-002 (Data-Driven Levels), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring), PROD-007 (Hazards), PROD-011 (Modular Blocks)
  */
 
 import { Coin } from '../entities/Coin.js';
+import { Hazard } from '../entities/Hazard.js';
+import { MovingPlatform } from '../entities/MovingPlatform.js';
 
 export class LevelManager {
     constructor(scene, physicsManager) {
@@ -29,6 +31,8 @@ export class LevelManager {
         this.keys = new Map();
         this.platforms = new Map();
         this.coins = new Map(); // Requirement: PROD-010
+        this.hazards = new Map(); // Requirement: PROD-007
+        this.movingPlatforms = new Map(); // Requirement: PROD-011
         this.exitPortal = null;
         
         console.log('LevelManager::constructor - Level manager initialized');
@@ -99,6 +103,16 @@ export class LevelManager {
         // Create coins - Requirement: PROD-010
         if (this.currentLevel.coins) {
             this.createCoins(this.currentLevel.coins);
+        }
+        
+        // Create hazards - Requirement: PROD-007
+        if (this.currentLevel.hazards) {
+            this.createHazards(this.currentLevel.hazards);
+        }
+        
+        // Create moving platforms - Requirement: PROD-011
+        if (this.currentLevel.movingPlatforms) {
+            this.createMovingPlatforms(this.currentLevel.movingPlatforms);
         }
         
         // Set level bounds
@@ -348,6 +362,68 @@ export class LevelManager {
     }
     
     /**
+     * Create hazards from level data
+     * Requirement: PROD-007 - Failure Condition: Hazards
+     */
+    createHazards(hazardsData) {
+        hazardsData.forEach((hazardData, index) => {
+            const hazard = new Hazard({
+                position: [hazardData.position.x, hazardData.position.y, hazardData.position.z],
+                size: hazardData.size ? [hazardData.size.width, hazardData.size.height, hazardData.size.depth] : [1, 0.5, 1],
+                type: hazardData.type || 'spikes',
+                color: hazardData.color
+            });
+            
+            // Add hazard mesh to scene
+            this.scene.add(hazard.mesh);
+            this.levelEntities.push(hazard.mesh);
+            
+            // Create physics body for collision detection
+            if (this.physicsManager && this.physicsManager.world) {
+                hazard.createPhysicsBody(this.physicsManager.world);
+                this.levelPhysicsBodies.push(hazard.physicsBody);
+            }
+            
+            // Track hazard
+            const hazardId = hazardData.id || `hazard_${index}`;
+            this.hazards.set(hazardId, hazard);
+            
+            console.log(`LevelManager::createHazards - Created ${hazard.type} hazard at`, hazard.position);
+        });
+    }
+    
+    /**
+     * Create moving platforms from level data
+     * Requirement: PROD-011 - Level Structure: Modular Blocks
+     */
+    createMovingPlatforms(movingPlatformsData) {
+        movingPlatformsData.forEach((platformData, index) => {
+            const movingPlatform = new MovingPlatform({
+                position: platformData.position,
+                size: platformData.size,
+                color: platformData.color || 0x4080FF,
+                movement: platformData.movement,
+                id: platformData.id || `moving_platform_${index}`
+            });
+            
+            // Add platform mesh to scene
+            movingPlatform.addToScene(this.scene);
+            this.levelEntities.push(movingPlatform.mesh);
+            
+            // Create physics body
+            if (this.physicsManager && this.physicsManager.world) {
+                movingPlatform.createPhysicsBody(this.physicsManager.world);
+                this.levelPhysicsBodies.push(movingPlatform.physicsBody);
+            }
+            
+            // Track moving platform
+            this.movingPlatforms.set(movingPlatform.id, movingPlatform);
+            
+            console.log(`LevelManager::createMovingPlatforms - Created moving platform: ${movingPlatform.id}`);
+        });
+    }
+    
+    /**
      * Update level entities (animations, state changes)
      * @param {number} deltaTime - Time since last frame
      */
@@ -385,6 +461,16 @@ export class LevelManager {
             const pulse = 1 + Math.sin(Date.now() * 0.003) * 0.1;
             this.exitPortal.scale.setScalar((this.currentLevel.exit?.scale || 1.5) * pulse);
         }
+        
+        // Update hazards - Requirement: PROD-007
+        this.hazards.forEach(hazard => {
+            hazard.update(deltaTime, elapsedTime);
+        });
+        
+        // Update moving platforms - Requirement: PROD-011
+        this.movingPlatforms.forEach(movingPlatform => {
+            movingPlatform.update(deltaTime, elapsedTime);
+        });
     }
     
     /**
@@ -399,6 +485,11 @@ export class LevelManager {
             
             // Remove key from scene with a simple fade effect
             this.scene.remove(key);
+            
+            // Play key collection sound - Requirement: PROD-012
+            if (window.game?.audioManager) {
+                window.game.audioManager.playSound('keyCollect');
+            }
             
             console.log(`LevelManager::collectKey - Collected key: ${keyId}`);
             console.log(`LevelManager::collectKey - Keys: ${this.gameState.keysCollected}/${this.gameState.totalKeys}`);
@@ -436,6 +527,11 @@ export class LevelManager {
             this.exitPortal.material.emissive.set(this.exitPortal.userData.unlockedColor);
             this.exitPortal.material.emissiveIntensity = 0.5;
             
+            // Play portal unlock sound - Requirement: PROD-012
+            if (window.game?.audioManager) {
+                window.game.audioManager.playSound('portalUnlock');
+            }
+            
             console.log('LevelManager::unlockExitPortal - Exit portal unlocked!');
         }
     }
@@ -466,6 +562,24 @@ export class LevelManager {
     }
     
     /**
+     * Check collision with hazards
+     * Requirement: PROD-007 - Failure Condition: Hazards
+     * @param {THREE.Vector3} position - Position to check
+     * @param {number} radius - Collision radius
+     * @returns {Object|null} Hazard collision data or null
+     */
+    checkHazardCollision(position, radius = 0.5) {
+        for (const [hazardId, hazard] of this.hazards) {
+            const distance = position.distanceTo(hazard.position);
+            // Check if player is within hazard bounds
+            if (distance < radius + Math.max(hazard.size[0], hazard.size[2]) / 2) {
+                return hazard.onPlayerCollision();
+            }
+        }
+        return null;
+    }
+    
+    /**
      * Check collision with collectibles
      * @param {THREE.Vector3} position - Position to check
      * @param {number} radius - Collision radius
@@ -489,6 +603,11 @@ export class LevelManager {
                     // Add score through GameState (if available via window.game)
                     if (window.game?.gameState) {
                         window.game.gameState.addScore(collectionData.value, 'coin');
+                    }
+                    
+                    // Play coin collection sound - Requirement: PROD-012
+                    if (window.game?.audioManager) {
+                        window.game.audioManager.playSound('coinCollect');
                     }
                     
                     // Remove coin from scene after collection animation
@@ -545,12 +664,24 @@ export class LevelManager {
             coin.dispose();
         });
         
+        // Dispose of hazards
+        this.hazards.forEach(hazard => {
+            hazard.dispose();
+        });
+        
+        // Dispose of moving platforms
+        this.movingPlatforms.forEach(movingPlatform => {
+            movingPlatform.dispose();
+        });
+        
         // Reset collections
         this.levelEntities = [];
         this.levelPhysicsBodies = [];
         this.keys.clear();
         this.platforms.clear();
         this.coins.clear();
+        this.hazards.clear();
+        this.movingPlatforms.clear();
         this.exitPortal = null;
         
         // Reset game state
