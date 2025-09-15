@@ -97,7 +97,7 @@ Here is the complete, actionable plan for Phase 11.
 > ### **Story Completion: STORY-11.1**
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(editor): Implement save/load and dedicated camera controls"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(editor): Implement save/load and dedicated camera controls"'.` **Evidence:** Commit hash: 5fb0c2d3dc7b92b995f268d6cb5af01474a8bf8c
 > 2.  **Create Pull Request:**
 >     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(editor): Core Functionality and Controls" --body "This PR implements save/load for levels, a visual asset palette, and dedicated orbit/pan/zoom camera controls for the editor. Fulfills Story 11.1." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
 > 3.  **CRITICAL HAND-OFF TO QA:**
