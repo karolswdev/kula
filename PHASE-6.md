@@ -61,7 +61,7 @@
 
 ### **3. Implementation Plan (The Execution)**
 
-#### [ ] STORY-6.1: Project Onboarding & OSS Foundation
+#### [x] STORY-6.1: Project Onboarding & OSS Foundation
 
 1.  **Task:** Read and summarize core strategic documents.
     *   **Instruction:** `Begin by reading the following files in their entirety to build context: VISION.md, REQUIREMENTS.md, and GLOBAL-DESIGN-PLAN.md.`
@@ -82,13 +82,13 @@
 > You may only proceed once all checkboxes for all tasks within this story are marked `[x]`. Then, you **MUST** complete the following steps in order:
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "docs(oss): Add contribution guidelines and project onboarding"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "docs(oss): Add contribution guidelines and project onboarding"'.` **Evidence:** Commit hash: 5457630
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat: Add OSS Documentation and Onboarding" --body "This PR establishes the foundational documents for open-source contribution, including contribution guidelines and issue templates. Fulfills Story 6.1."'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [x] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat: Add OSS Documentation and Onboarding" --body "This PR establishes the foundational documents for open-source contribution, including contribution guidelines and issue templates. Fulfills Story 6.1."'.` **Evidence:** PR URL: https://github.com/karolswdev/kula/pull/1
 > 3.  **CRITICAL HAND-OFF TO QA:**
->     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 6.1 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
+>     *   [x] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 6.1 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
 > 4.  **Merge Pull Request:**
->     *   [ ] **Pull Request Merged:** **Instruction:** `Once you receive the approval and rationale from your orchestrator, execute 'gh pr merge [PR_URL] --squash --body "[RATIONALE_FROM_QA]"'.` **Evidence:** Provide the full commit hash of the merge commit.
+>     *   [x] **Pull Request Merged:** **Instruction:** `Once you receive the approval and rationale from your orchestrator, execute 'gh pr merge [PR_URL] --squash --body "[RATIONALE_FROM_QA]"'.` **Evidence:** Merge commit: 69c169a
 > 5.  **Finalize Story:**
 >     *   **Instruction:** Once the four checkboxes above are complete, you **MUST** update this story's main checkbox from `[ ]` to `[x]`.
 
@@ -99,18 +99,83 @@
     *   **Fulfills:** This task establishes our automated quality gate.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-6.3`:**
-            *   [ ] **Workflow File Created:** Checked after the YAML file is written. **Evidence:** Provide the complete content of the `.github/workflows/ci.yml` file.
+            *   [x] **Workflow File Created:** Checked after the YAML file is written. **Evidence:** Complete content of `.github/workflows/ci.yml` provided below.
+
+**Evidence for TC-6.3 - Complete CI Workflow File:**
+```yaml
+name: CI Pipeline
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  lint:
+    name: Lint Code
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Run linter
+        run: npm run lint
+        
+  e2e-tests:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          
+      - name: Install dependencies
+        run: npm ci
+        
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+        
+      - name: Run E2E tests
+        run: npm test
+        
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 30
+```
 
 > ### **Story Completion: STORY-6.2**
 >
 > You may only proceed once all checkboxes for all tasks within this story are marked `[x]`. Then, you **MUST** complete the following steps in order:
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .github/workflows/ci.yml' followed by 'git commit -m "feat(ci): Establish foundational GitHub Actions CI pipeline"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .github/workflows/ci.yml' followed by 'git commit -m "feat(ci): Establish foundational GitHub Actions CI pipeline"'.` **Evidence:** Commit hash: 43cf067
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat: Establish CI Pipeline" --body "This PR introduces the foundational GitHub Actions workflow for automated linting and testing. Fulfills Story 6.2."'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [x] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat: Establish CI Pipeline" --body "This PR introduces the foundational GitHub Actions workflow for automated linting and testing. Fulfills Story 6.2."'.` **Evidence:** PR URL: https://github.com/karolswdev/kula/pull/2
 > 3.  **CRITICAL HAND-OFF TO QA:**
->     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 6.2 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
+>     *   [x] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 6.2 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
 > 4.  **Merge Pull Request:**
 >     *   [ ] **Pull Request Merged:** **Instruction:** `Once you receive the approval and rationale from your orchestrator, execute 'gh pr merge [PR_URL] --squash --body "[RATIONALE_FROM_QA]"'.` **Evidence:** Provide the full commit hash of the merge commit.
 > 5.  **Finalize Story:**
