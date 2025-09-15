@@ -1,0 +1,65 @@
+{
+  "name": "Timed Disappear Test",
+  "description": "Test level for TC-9.3: Timed disappear behavior",
+  "theme": "nature",
+  "gridUnitSize": 4,
+  "blocks": [
+    {
+      "type": "standard",
+      "at": [0, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [1, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [2, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [3, 0, 0],
+      "description": "Disappearing platform"
+    },
+    {
+      "type": "standard",
+      "at": [4, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [5, 0, 0]
+    }
+  ],
+  "behaviors": [
+    {
+      "type": "timed_disappear",
+      "target": [3, 0, 0],
+      "config": {
+        "interval": 2.0,
+        "visibleDuration": 1.5,
+        "invisibleDuration": 0.5,
+        "startVisible": true,
+        "warningTime": 0.5
+      }
+    }
+  ],
+  "player": {
+    "spawn": [0, 1, 0],
+    "lives": 3
+  },
+  "objectives": {
+    "keys": [
+      {
+        "id": "key1",
+        "at": [5, 1, 0]
+      }
+    ],
+    "exit": {
+      "at": [5, 0, 0]
+    }
+  },
+  "camera": {
+    "position": [2, 6, 10],
+    "lookAt": [3, 0, 0]
+  }
+}

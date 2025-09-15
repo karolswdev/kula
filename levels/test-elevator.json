@@ -1,0 +1,67 @@
+{
+  "name": "Elevator Test",
+  "description": "Test level for TC-9.2: Elevator behavior",
+  "theme": "nature",
+  "gridUnitSize": 4,
+  "blocks": [
+    {
+      "type": "standard",
+      "at": [0, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [1, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [2, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [3, 0, 0],
+      "description": "Elevator platform"
+    },
+    {
+      "type": "standard",
+      "at": [3, 4, 0],
+      "description": "Destination platform"
+    },
+    {
+      "type": "standard",
+      "at": [4, 4, 0]
+    }
+  ],
+  "behaviors": [
+    {
+      "type": "elevator",
+      "target": [3, 0, 0],
+      "config": {
+        "trigger": "onPlayerContact",
+        "startPosition": [12, 0, 0],
+        "endPosition": [12, 16, 0],
+        "speed": 2.0,
+        "returnDelay": 3.0,
+        "autoReturn": true
+      }
+    }
+  ],
+  "player": {
+    "spawn": [0, 1, 0],
+    "lives": 3
+  },
+  "objectives": {
+    "keys": [
+      {
+        "id": "key1",
+        "at": [4, 5, 0]
+      }
+    ],
+    "exit": {
+      "at": [4, 4, 0]
+    }
+  },
+  "camera": {
+    "position": [0, 8, 12],
+    "lookAt": [3, 2, 0]
+  }
+}

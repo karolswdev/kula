@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Behavior System Test - Kula Browser</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+        }
+        
+        #gameCanvas {
+            display: block;
+        }
+        
+        #ui-overlay {
+            position: fixed;
+            top: 20px;
+            left: 20px;
+            color: white;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 14px;
+            z-index: 100;
+        }
+        
+        #level-selector {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            z-index: 100;
+        }
+        
+        #level-selector h3 {
+            margin-top: 0;
+        }
+        
+        #level-selector button {
+            display: block;
+            width: 100%;
+            margin: 5px 0;
+            padding: 10px;
+            background: #667eea;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        #level-selector button:hover {
+            background: #764ba2;
+        }
+        
+        #controls {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 15px;
+            border-radius: 10px;
+            color: white;
+            z-index: 100;
+        }
+        
+        .key-hint {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <canvas id="gameCanvas"></canvas>
+    
+    <div id="ui-overlay">
+        <h2>Behavior System Test</h2>
+        <div>FPS: <span id="fps">0</span></div>
+        <div>Player Position: <span id="player-pos">0, 0, 0</span></div>
+        <div>Active Behaviors: <span id="active-behaviors">0</span></div>
+    </div>
+    
+    <div id="level-selector">
+        <h3>Test Levels</h3>
+        <button onclick="loadLevel('levels/test-elevator.json')">
+            TC-9.2: Elevator Test
+        </button>
+        <button onclick="loadLevel('levels/test-timed-disappear.json')">
+            TC-9.3: Timed Disappear Test
+        </button>
+        <button onclick="loadLevel('levels/test-switch-target.json')">
+            TC-9.4: Switch & Target Test
+        </button>
+        <button onclick="loadLevel('levels/test-behaviors.json')">
+            All Behaviors Combined
+        </button>
+        <button onclick="loadLevel('levels/grid-level-1.json')">
+            Original Grid Level
+        </button>
+    </div>
+    
+    <div id="controls">
+        <h3>Controls</h3>
+        <div><span class="key-hint">WASD</span> Move</div>
+        <div><span class="key-hint">Space</span> Jump</div>
+        <div><span class="key-hint">G</span> Change Gravity</div>
+        <div><span class="key-hint">R</span> Reset Level</div>
+        <div><span class="key-hint">Mouse</span> Camera</div>
+    </div>
+
+    <script type="module">
+        import { Game } from './src/core/Game.js';
+        
+        let game;
+        let animationId;
+        let lastTime = performance.now();
+        let frameCount = 0;
+        let fpsTimer = 0;
+        
+        async function initGame() {
+            console.log('Initializing Behavior Test Game...');
+            
+            // Create game instance
+            game = new Game();
+            
+            // Initialize with default test level
+            await game.init('levels/test-elevator.json');
+            
+            // Start animation loop
+            animate();
+        }
+        
+        function animate() {
+            animationId = requestAnimationFrame(animate);
+            
+            const currentTime = performance.now();
+            const deltaTime = (currentTime - lastTime) / 1000;
+            lastTime = currentTime;
+            
+            // Update FPS counter
+            frameCount++;
+            fpsTimer += deltaTime;
+            if (fpsTimer >= 1.0) {
+                document.getElementById('fps').textContent = Math.round(frameCount / fpsTimer);
+                frameCount = 0;
+                fpsTimer = 0;
+            }
+            
+            // Update game
+            game.update(deltaTime);
+            game.render();
+            
+            // Update UI
+            updateUI();
+        }
+        
+        function updateUI() {
+            // Update player position
+            if (game.playerMesh) {
+                const pos = game.playerMesh.position;
+                document.getElementById('player-pos').textContent = 
+                    `${pos.x.toFixed(1)}, ${pos.y.toFixed(1)}, ${pos.z.toFixed(1)}`;
+            }
+            
+            // Update active behaviors count
+            if (game.behaviorSystem) {
+                document.getElementById('active-behaviors').textContent = 
+                    game.behaviorSystem.behaviors.size;
+            }
+        }
+        
+        window.loadLevel = async function(levelPath) {
+            console.log(`Loading level: ${levelPath}`);
+            
+            // Stop current animation
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            
+            // Load new level
+            await game.loadLevel(levelPath);
+            
+            // Restart animation
+            lastTime = performance.now();
+            animate();
+        };
+        
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            if (game && game.camera && game.renderer) {
+                game.camera.aspect = window.innerWidth / window.innerHeight;
+                game.camera.updateProjectionMatrix();
+                game.renderer.setSize(window.innerWidth, window.innerHeight);
+            }
+        });
+        
+        // Add keyboard shortcuts for level switching
+        window.addEventListener('keydown', (e) => {
+            switch(e.key) {
+                case '1':
+                    loadLevel('levels/test-elevator.json');
+                    break;
+                case '2':
+                    loadLevel('levels/test-timed-disappear.json');
+                    break;
+                case '3':
+                    loadLevel('levels/test-switch-target.json');
+                    break;
+                case '4':
+                    loadLevel('levels/test-behaviors.json');
+                    break;
+                case 'r':
+                case 'R':
+                    // Reload current level
+                    if (game && game.levelManager && game.levelManager.currentLevelPath) {
+                        loadLevel(game.levelManager.currentLevelPath);
+                    }
+                    break;
+            }
+        });
+        
+        // Initialize game when page loads
+        window.addEventListener('load', initGame);
+        
+        // Cleanup on page unload
+        window.addEventListener('beforeunload', () => {
+            if (animationId) {
+                cancelAnimationFrame(animationId);
+            }
+            if (game) {
+                game.cleanup();
+            }
+        });
+    </script>
+</body>
+</html>

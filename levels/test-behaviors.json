@@ -1,0 +1,152 @@
+{
+  "name": "Behavior Test Level",
+  "description": "Test level demonstrating elevator, timed disappear, and switch/target behaviors",
+  "theme": "nature",
+  "gridUnitSize": 4,
+  "blocks": [
+    {
+      "type": "standard",
+      "at": [0, 0, 0],
+      "description": "Starting platform"
+    },
+    {
+      "type": "standard", 
+      "at": [1, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [2, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [3, 0, 0],
+      "description": "Elevator platform - will move up when player steps on it"
+    },
+    {
+      "type": "standard",
+      "at": [4, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [5, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [6, 0, 0],
+      "description": "Timed disappear platform - cycles every 2 seconds"
+    },
+    {
+      "type": "standard",
+      "at": [7, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [8, 0, 0],
+      "description": "Switch block - activates door when touched"
+    },
+    {
+      "type": "standard",
+      "at": [9, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [10, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [10, 0, 1],
+      "description": "Target door - moves when switch is activated"
+    },
+    {
+      "type": "standard",
+      "at": [10, 0, 2]
+    },
+    {
+      "type": "standard",
+      "at": [11, 0, 0],
+      "description": "Goal platform"
+    },
+    {
+      "type": "standard",
+      "at": [3, 3, 0],
+      "description": "Upper platform reached by elevator"
+    },
+    {
+      "type": "standard",
+      "at": [4, 3, 0]
+    },
+    {
+      "type": "standard",
+      "at": [5, 3, 0]
+    }
+  ],
+  "behaviors": [
+    {
+      "type": "elevator",
+      "target": [3, 0, 0],
+      "config": {
+        "trigger": "onPlayerContact",
+        "startPosition": [12, 0, 0],
+        "endPosition": [12, 12, 0],
+        "speed": 2.0,
+        "returnDelay": 3.0,
+        "autoReturn": true
+      }
+    },
+    {
+      "type": "timed_disappear",
+      "target": [6, 0, 0],
+      "config": {
+        "interval": 2.0,
+        "visibleDuration": 1.5,
+        "invisibleDuration": 0.5,
+        "startVisible": true,
+        "warningTime": 0.5
+      }
+    },
+    {
+      "type": "switch",
+      "target": [8, 0, 0],
+      "config": {
+        "trigger": "onPlayerContact",
+        "targetBlock": [10, 0, 1],
+        "action": "activate",
+        "visual": "button",
+        "oneTime": true
+      }
+    },
+    {
+      "type": "target",
+      "target": [10, 0, 1],
+      "config": {
+        "actionType": "move",
+        "moveTarget": [10, -2, 1],
+        "moveSpeed": 1.5,
+        "toggleable": false
+      }
+    }
+  ],
+  "player": {
+    "spawn": [0, 1, 0],
+    "lives": 3
+  },
+  "objectives": {
+    "keys": [
+      {
+        "id": "key1",
+        "at": [5, 4, 0]
+      },
+      {
+        "id": "key2",
+        "at": [11, 1, 0]
+      }
+    ],
+    "exit": {
+      "at": [11, 0, 0]
+    }
+  },
+  "camera": {
+    "position": [0, 10, 15],
+    "lookAt": [5, 0, 0]
+  }
+}

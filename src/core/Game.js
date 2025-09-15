@@ -216,7 +216,8 @@ export class Game {
             if (this.behaviorSystem) {
                 this.behaviorSystem.parseBehaviors(
                     this.levelManager.currentLevel,
-                    this.levelManager.platforms
+                    this.levelManager.platforms,
+                    this.levelManager.levelPhysicsBodies
                 );
             }
             
