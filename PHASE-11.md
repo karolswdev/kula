@@ -99,7 +99,7 @@ Here is the complete, actionable plan for Phase 11.
 > 1.  **Commit Work:**
 >     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(editor): Implement save/load and dedicated camera controls"'.` **Evidence:** Commit hash: 5fb0c2d3dc7b92b995f268d6cb5af01474a8bf8c
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(editor): Core Functionality and Controls" --body "This PR implements save/load for levels, a visual asset palette, and dedicated orbit/pan/zoom camera controls for the editor. Fulfills Story 11.1." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [x] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(editor): Core Functionality and Controls" --body "This PR implements save/load for levels, a visual asset palette, and dedicated orbit/pan/zoom camera controls for the editor. Fulfills Story 11.1." --repo "karolswdev/kula"'.` **Evidence:** PR URL: https://github.com/karolswdev/kula/pull/12
 > 3.  **CRITICAL HAND-OFF TO QA:**
 >     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 11.1 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
 > 4.  **Merge Pull Request:**
