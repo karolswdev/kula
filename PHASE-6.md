@@ -171,11 +171,11 @@ jobs:
 > You may only proceed once all checkboxes for all tasks within this story are marked `[x]`. Then, you **MUST** complete the following steps in order:
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .github/workflows/ci.yml' followed by 'git commit -m "feat(ci): Establish foundational GitHub Actions CI pipeline"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .github/workflows/ci.yml' followed by 'git commit -m "feat(ci): Establish foundational GitHub Actions CI pipeline"'.` **Evidence:** Commit hash: 43cf067
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat: Establish CI Pipeline" --body "This PR introduces the foundational GitHub Actions workflow for automated linting and testing. Fulfills Story 6.2."'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [x] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat: Establish CI Pipeline" --body "This PR introduces the foundational GitHub Actions workflow for automated linting and testing. Fulfills Story 6.2."'.` **Evidence:** PR URL: https://github.com/karolswdev/kula/pull/2
 > 3.  **CRITICAL HAND-OFF TO QA:**
->     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 6.2 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
+>     *   [x] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 6.2 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
 > 4.  **Merge Pull Request:**
 >     *   [ ] **Pull Request Merged:** **Instruction:** `Once you receive the approval and rationale from your orchestrator, execute 'gh pr merge [PR_URL] --squash --body "[RATIONALE_FROM_QA]"'.` **Evidence:** Provide the full commit hash of the merge commit.
 > 5.  **Finalize Story:**
