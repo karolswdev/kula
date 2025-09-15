@@ -1,11 +1,12 @@
 /**
  * LevelManager - Handles loading and management of game levels from JSON data
- * Requirements: ARCH-002 (Data-Driven Levels), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring), PROD-007 (Hazards), PROD-011 (Modular Blocks)
+ * Requirements: ARCH-002 (Data-Driven Levels), ARCH-003 (Grid Coordinate System), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring), PROD-007 (Hazards), PROD-011 (Modular Blocks), PROD-013 (Universal 3D Grid)
  */
 
 import { Coin } from '../entities/Coin.js';
 import { Hazard } from '../entities/Hazard.js';
 import { MovingPlatform } from '../entities/MovingPlatform.js';
+import assetRegistry from '../assets/AssetRegistry.js';
 
 export class LevelManager {
     constructor(scene, physicsManager) {
@@ -16,6 +17,10 @@ export class LevelManager {
         this.currentLevel = null;
         this.levelEntities = [];
         this.levelPhysicsBodies = [];
+        
+        // Grid system properties - Requirement: ARCH-003, PROD-013
+        this.gridUnitSize = 4; // Default grid unit size
+        this.isGridBased = false; // Flag to track if level uses new grid format
         
         // Game state for objectives - Requirement: PROD-004, PROD-005
         this.gameState = {
@@ -35,12 +40,12 @@ export class LevelManager {
         this.movingPlatforms = new Map(); // Requirement: PROD-011
         this.exitPortal = null;
         
-        console.log('LevelManager::constructor - Level manager initialized');
+        console.log('LevelManager::constructor - Level manager initialized with grid support');
     }
     
     /**
      * Load a level from JSON data
-     * Requirement: ARCH-002 - Data-Driven Levels
+     * Requirement: ARCH-002 - Data-Driven Levels, ARCH-003 - Grid Coordinate System
      * @param {Object|string} levelData - Level data object or path to JSON file
      * @returns {Promise<void>}
      */
@@ -63,7 +68,76 @@ export class LevelManager {
             this.currentLevel = levelData;
         }
         
-        console.log('LevelManager::load - Level data loaded:', this.currentLevel.name);
+        // Check if this is a new grid-based level format
+        if (this.currentLevel.gridUnitSize !== undefined && this.currentLevel.blocks) {
+            this.isGridBased = true;
+            this.gridUnitSize = this.currentLevel.gridUnitSize || 4;
+            console.log(`LevelManager::load - Loading grid-based level with gridUnitSize: ${this.gridUnitSize}`);
+            
+            // Set theme for AssetRegistry if specified
+            if (this.currentLevel.theme) {
+                assetRegistry.setTheme(this.currentLevel.theme);
+            }
+            
+            // Load grid-based level
+            await this.loadGridLevel();
+        } else {
+            // Load legacy format level
+            this.isGridBased = false;
+            console.log('LevelManager::load - Loading legacy format level:', this.currentLevel.name);
+            await this.loadLegacyLevel();
+        }
+        
+        console.log(`LevelManager::load - Level loaded with ${this.platforms.size} platforms, ${this.keys.size} keys`);
+        console.log('LevelManager::load - Game state:', this.gameState);
+    }
+    
+    /**
+     * Load a grid-based level format
+     * Requirement: ARCH-003 - Grid Coordinate System, PROD-013 - Universal 3D Grid
+     */
+    async loadGridLevel() {
+        console.log('LevelManager::loadGridLevel - Loading grid-based level');
+        
+        // Process blocks
+        if (this.currentLevel.blocks) {
+            this.createGridBlocks(this.currentLevel.blocks);
+        }
+        
+        // Process player spawn position (convert from grid to world)
+        if (this.currentLevel.player) {
+            const spawn = this.currentLevel.player.spawn;
+            this.gameState.playerStartPosition = this.gridToWorld(spawn);
+            this.gameState.playerStartGravity = new THREE.Vector3(0, -1, 0);
+            
+            console.log(`LevelManager::loadGridLevel - Player spawn: grid[${spawn}] -> world(${this.gameState.playerStartPosition.x}, ${this.gameState.playerStartPosition.y}, ${this.gameState.playerStartPosition.z})`);
+        }
+        
+        // Process objectives
+        if (this.currentLevel.objectives) {
+            // Create keys
+            if (this.currentLevel.objectives.keys) {
+                this.createGridKeys(this.currentLevel.objectives.keys);
+                this.gameState.totalKeys = this.currentLevel.objectives.keys.length;
+            }
+            
+            // Create exit portal
+            if (this.currentLevel.objectives.exit) {
+                this.createGridExitPortal(this.currentLevel.objectives.exit);
+            }
+        }
+        
+        // Process collectibles
+        if (this.currentLevel.collectibles) {
+            this.createGridCoins(this.currentLevel.collectibles);
+        }
+    }
+    
+    /**
+     * Load a legacy format level (backward compatibility)
+     */
+    async loadLegacyLevel() {
+        console.log('LevelManager::loadLegacyLevel - Loading legacy format level');
         
         // Set player start position and gravity
         if (this.currentLevel.playerStart) {
@@ -119,9 +193,140 @@ export class LevelManager {
         if (this.currentLevel.levelBounds) {
             this.levelBounds = this.currentLevel.levelBounds;
         }
+    }
+    
+    /**
+     * Convert grid coordinates to world position
+     * Requirement: ARCH-003 - Grid Coordinate System
+     * Formula: worldPosition = gridPosition * gridUnitSize
+     * @param {Array} gridCoords - Integer grid coordinates [x, y, z]
+     * @returns {THREE.Vector3} World position
+     */
+    gridToWorld(gridCoords) {
+        return new THREE.Vector3(
+            gridCoords[0] * this.gridUnitSize,
+            gridCoords[1] * this.gridUnitSize,
+            gridCoords[2] * this.gridUnitSize
+        );
+    }
+    
+    /**
+     * Create blocks from grid-based level data
+     * Requirement: PROD-013 - Universal 3D Grid, ARCH-004 - Asset Registry
+     */
+    createGridBlocks(blocksData) {
+        console.log(`LevelManager::createGridBlocks - Creating ${blocksData.length} blocks`);
         
-        console.log(`LevelManager::load - Level loaded with ${this.platforms.size} platforms, ${this.keys.size} keys`);
-        console.log('LevelManager::load - Game state:', this.gameState);
+        blocksData.forEach((blockData, index) => {
+            // Get block definition from AssetRegistry
+            const blockDef = assetRegistry.getBlockDefinition(blockData.type);
+            if (!blockDef) {
+                console.warn(`LevelManager::createGridBlocks - Unknown block type: ${blockData.type}`);
+                return;
+            }
+            
+            // Calculate world position from grid coordinates
+            const worldPos = this.gridToWorld(blockData.at);
+            
+            // Log the grid to world transformation for testing
+            console.log(`LevelManager::createGridBlocks - Block '${blockData.type}' at grid[${blockData.at}] -> world(${worldPos.x}, ${worldPos.y}, ${worldPos.z})`);
+            
+            // Create placeholder mesh (will be replaced with actual model in STORY-7.2)
+            const geometry = new THREE.BoxGeometry(
+                this.gridUnitSize * 0.95, // Slightly smaller for visual gaps
+                this.gridUnitSize * 0.95,
+                this.gridUnitSize * 0.95
+            );
+            
+            // Color based on block type for visual distinction
+            const color = blockData.type === 'nature_rock_platform' ? 0x808080 : 0x4080ff;
+            const material = new THREE.MeshStandardMaterial({
+                color: color,
+                roughness: 0.8,
+                metalness: 0.2
+            });
+            
+            const mesh = new THREE.Mesh(geometry, material);
+            mesh.position.copy(worldPos);
+            mesh.receiveShadow = true;
+            mesh.castShadow = true;
+            mesh.name = `block-${blockData.type}-${index}`;
+            mesh.userData = {
+                blockType: blockData.type,
+                gridPosition: blockData.at,
+                blockDefinition: blockDef
+            };
+            
+            // Add to scene and track
+            this.scene.add(mesh);
+            this.levelEntities.push(mesh);
+            this.platforms.set(`block-${index}`, mesh);
+            
+            // Create physics body using simplified shape from registry
+            if (this.physicsManager && this.physicsManager.world) {
+                const physicsShape = assetRegistry.createPhysicsShape(blockDef.physics);
+                // Note: Actual physics body creation will be handled in later stories
+                console.log(`LevelManager::createGridBlocks - Would create physics shape: ${blockDef.physics.shape}`);
+            }
+        });
+    }
+    
+    /**
+     * Create keys from grid-based level data
+     */
+    createGridKeys(keysData) {
+        keysData.forEach(keyData => {
+            const worldPos = this.gridToWorld(keyData.at);
+            
+            // Create key at grid position
+            const keyWorldData = {
+                id: keyData.id,
+                position: { x: worldPos.x, y: worldPos.y + 2, z: worldPos.z }, // Raise key above block
+                color: '#FFD700',
+                scale: 1.0
+            };
+            
+            // Use existing key creation logic
+            this.createKeys([keyWorldData]);
+        });
+    }
+    
+    /**
+     * Create exit portal from grid-based level data
+     */
+    createGridExitPortal(exitData) {
+        const worldPos = this.gridToWorld(exitData.at);
+        
+        // Create exit portal at grid position
+        const exitWorldData = {
+            position: { x: worldPos.x, y: worldPos.y + 0.5, z: worldPos.z },
+            lockedColor: '#FF0000',
+            unlockedColor: '#00FF00',
+            scale: 1.5
+        };
+        
+        // Use existing portal creation logic
+        this.createExitPortal(exitWorldData);
+    }
+    
+    /**
+     * Create coins from grid-based level data
+     */
+    createGridCoins(coinsData) {
+        coinsData.forEach((coinData, index) => {
+            const worldPos = this.gridToWorld(coinData.at);
+            
+            // Create coin at grid position
+            const coinWorldData = {
+                id: `coin-${index}`,
+                position: { x: worldPos.x, y: worldPos.y + 1, z: worldPos.z },
+                value: coinData.value || 10,
+                type: coinData.type || 'silver'
+            };
+            
+            // Use existing coin creation logic
+            this.createCoins([coinWorldData]);
+        });
     }
     
     /**
