@@ -91,11 +91,122 @@ function LevelManager_LoadThemedLevel_UsesCorrectThematicAssets() {
     }
 }
 
-// Test Case TC-8.3: Theme Switching (Will be implemented in STORY-8.2)
+// Test Case TC-8.3: Theme Switching
 async function ThemeManager_SwitchTheme_RendersSameLevelWithDifferentAssets() {
-    console.log('\n=== Test Case TC-8.3: Theme Switching (Placeholder for STORY-8.2) ===');
-    console.log('This test will be implemented in STORY-8.2');
-    return true;
+    console.log('\n=== Test Case TC-8.3: Theme Switching ===');
+    
+    // Create a test level that uses generic block types
+    const testLevel = {
+        gridUnitSize: 4,
+        blocks: [
+            { type: 'standard_platform', at: [0, 0, 0] },
+            { type: 'grass_platform', at: [1, 0, 0] },
+            { type: 'stone_platform', at: [2, 0, 0] },
+            { type: 'brick_wall', at: [3, 0, 0] }
+        ]
+    };
+    
+    // First, load with nature theme
+    console.log('Loading level with "nature" theme...');
+    assetRegistry.setTheme('nature');
+    themeManager.setTheme('nature');
+    
+    const natureAssets = {};
+    testLevel.blocks.forEach(block => {
+        const blockDef = assetRegistry.getBlockDefinition(block.type);
+        natureAssets[block.type] = blockDef ? blockDef.model : null;
+        console.log(`  ${block.type} -> ${blockDef?.model}`);
+    });
+    
+    // Now create a temporary 'industrial' theme for testing
+    console.log('\nCreating temporary "industrial" theme...');
+    
+    // Register industrial theme in AssetRegistry
+    const industrialDefinitions = new Map();
+    industrialDefinitions.set('standard_platform', {
+        model: 'assets/Cube Crate.glb',
+        physics: { shape: 'Box', dimensions: [2, 2, 2] },
+        gridFootprint: [1, 1, 1]
+    });
+    industrialDefinitions.set('grass_platform', {
+        model: 'assets/Metal Platform.glb',
+        physics: { shape: 'Box', dimensions: [2, 2, 2] },
+        gridFootprint: [1, 1, 1]
+    });
+    industrialDefinitions.set('stone_platform', {
+        model: 'assets/Concrete Block.glb',
+        physics: { shape: 'Box', dimensions: [2, 2, 2] },
+        gridFootprint: [1, 1, 1]
+    });
+    industrialDefinitions.set('brick_wall', {
+        model: 'assets/Steel Wall.glb',
+        physics: { shape: 'Box', dimensions: [2, 2, 2] },
+        gridFootprint: [1, 1, 1]
+    });
+    
+    // Add the industrial theme to the registry
+    assetRegistry.themes.set('industrial', industrialDefinitions);
+    
+    // Register the theme with ThemeManager
+    themeManager.registerTheme('industrial', {
+        name: 'Industrial Zone',
+        description: 'A mechanical, factory-themed environment',
+        primaryColors: ['#808080', '#404040', '#606060']
+    });
+    
+    // Switch to industrial theme
+    console.log('\nSwitching to "industrial" theme...');
+    const switchResult = themeManager.setTheme('industrial');
+    assetRegistry.setTheme('industrial');
+    
+    if (!switchResult) {
+        console.log('❌ TC-8.3 FAILED: Could not switch to industrial theme');
+        return false;
+    }
+    
+    // Load the same level with industrial theme
+    const industrialAssets = {};
+    testLevel.blocks.forEach(block => {
+        const blockDef = assetRegistry.getBlockDefinition(block.type);
+        industrialAssets[block.type] = blockDef ? blockDef.model : null;
+        console.log(`  ${block.type} -> ${blockDef?.model}`);
+    });
+    
+    // Verify that assets changed
+    console.log('\n=== Comparison of Assets ===');
+    let allChanged = true;
+    let atLeastOneChanged = false;
+    
+    for (const blockType in natureAssets) {
+        const natureAsset = natureAssets[blockType];
+        const industrialAsset = industrialAssets[blockType];
+        
+        if (natureAsset && industrialAsset) {
+            if (natureAsset !== industrialAsset) {
+                console.log(`✅ ${blockType}: Changed from ${natureAsset} to ${industrialAsset}`);
+                atLeastOneChanged = true;
+            } else {
+                console.log(`⚠️  ${blockType}: No change (both use ${natureAsset})`);
+                // This is okay if the theme doesn't define a different asset
+            }
+        } else {
+            console.log(`❌ ${blockType}: Missing asset definition`);
+            allChanged = false;
+        }
+    }
+    
+    // Clean up - switch back to nature theme
+    themeManager.setTheme('nature');
+    assetRegistry.setTheme('nature');
+    
+    if (atLeastOneChanged) {
+        console.log('\n✅ TC-8.3 PASSED: Theme switching changes asset mappings');
+        console.log('   The same level structure uses different visual assets based on theme');
+        return true;
+    } else {
+        console.log('\n❌ TC-8.3 FAILED: No asset changes detected during theme switch');
+        return false;
+    }
 }
 
 // Verify all theme mappings are correct
@@ -173,6 +284,10 @@ export async function runPhase8Tests() {
     // Run TC-8.2
     const tc82Result = LevelManager_LoadThemedLevel_UsesCorrectThematicAssets();
     results.push({ test: 'TC-8.2', passed: tc82Result });
+    
+    // Run TC-8.3
+    const tc83Result = await ThemeManager_SwitchTheme_RendersSameLevelWithDifferentAssets();
+    results.push({ test: 'TC-8.3', passed: tc83Result });
     
     // Verify theme mappings
     const mappingsResult = verifyThemeMappings();

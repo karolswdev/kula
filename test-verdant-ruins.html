@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verdant Ruins Level Test</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+            font-family: Arial, sans-serif;
+        }
+        #game-container {
+            width: 100vw;
+            height: 100vh;
+        }
+        #level-selector {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        #level-selector select {
+            padding: 5px;
+            margin-left: 10px;
+        }
+        #info {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 100;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+        }
+    </style>
+</head>
+<body>
+    <div id="level-selector">
+        <label>
+            Select Level:
+            <select id="level-select">
+                <option value="levels/verdant-ruins-01.json">Verdant Ruins 01 - Overgrown Entry</option>
+                <option value="levels/verdant-ruins-02.json">Verdant Ruins 02 - Ancient Garden</option>
+                <option value="levels/verdant-ruins-03.json">Verdant Ruins 03 - Temple Heights</option>
+            </select>
+        </label>
+        <button id="load-level">Load Level</button>
+    </div>
+    
+    <div id="info">
+        <div>Keys: <span id="keys">0/0</span></div>
+        <div>Coins: <span id="coins">0</span></div>
+        <div>Use WASD to move, Space to jump</div>
+        <div>Q/E to rotate gravity</div>
+    </div>
+    
+    <div id="game-container"></div>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import * as CANNON from 'cannon-es';
+        import { OrbitControls } from 'three/examples/jsm/controls/OrbitControls.js';
+        import { LevelManager } from './src/level/LevelManager.js';
+        import { PhysicsManager } from './src/physics/PhysicsManager.js';
+        import { PlayerController } from './src/player/PlayerController.js';
+        import { CameraController } from './src/camera/CameraController.js';
+        import { InputManager } from './src/input/InputManager.js';
+        import assetManager from './src/assets/AssetManager.js';
+        
+        let scene, camera, renderer;
+        let levelManager, physicsManager, playerController, cameraController, inputManager;
+        let clock = new THREE.Clock();
+        
+        async function init() {
+            // Create scene
+            scene = new THREE.Scene();
+            scene.background = new THREE.Color(0x87CEEB); // Sky blue
+            scene.fog = new THREE.Fog(0x87CEEB, 10, 100);
+            
+            // Create camera
+            camera = new THREE.PerspectiveCamera(
+                75,
+                window.innerWidth / window.innerHeight,
+                0.1,
+                1000
+            );
+            camera.position.set(10, 10, 10);
+            camera.lookAt(0, 0, 0);
+            
+            // Create renderer
+            renderer = new THREE.WebGLRenderer({ antialias: true });
+            renderer.setSize(window.innerWidth, window.innerHeight);
+            renderer.shadowMap.enabled = true;
+            renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+            document.getElementById('game-container').appendChild(renderer.domElement);
+            
+            // Add lighting
+            const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+            scene.add(ambientLight);
+            
+            const directionalLight = new THREE.DirectionalLight(0xffffff, 0.8);
+            directionalLight.position.set(5, 10, 5);
+            directionalLight.castShadow = true;
+            directionalLight.shadow.camera.left = -20;
+            directionalLight.shadow.camera.right = 20;
+            directionalLight.shadow.camera.top = 20;
+            directionalLight.shadow.camera.bottom = -20;
+            scene.add(directionalLight);
+            
+            // Initialize physics
+            physicsManager = new PhysicsManager();
+            
+            // Initialize level manager
+            levelManager = new LevelManager(scene, physicsManager);
+            
+            // Initialize input
+            inputManager = new InputManager();
+            
+            // Initialize player
+            playerController = new PlayerController(scene, physicsManager, inputManager);
+            
+            // Initialize camera controller
+            cameraController = new CameraController(camera, playerController);
+            
+            // Load initial level
+            await loadLevel('levels/verdant-ruins-01.json');
+            
+            // Setup level selector
+            document.getElementById('load-level').addEventListener('click', async () => {
+                const levelPath = document.getElementById('level-select').value;
+                await loadLevel(levelPath);
+            });
+            
+            // Add orbit controls for testing
+            const controls = new OrbitControls(camera, renderer.domElement);
+            controls.enableDamping = true;
+            controls.dampingFactor = 0.05;
+            
+            // Handle window resize
+            window.addEventListener('resize', onWindowResize);
+            
+            // Start animation loop
+            animate();
+        }
+        
+        async function loadLevel(levelPath) {
+            console.log('Loading level:', levelPath);
+            
+            // Clear current level
+            if (levelManager.currentLevel) {
+                levelManager.clear();
+            }
+            
+            // Load new level
+            await levelManager.load(levelPath);
+            
+            // Reset player to spawn position
+            const spawnPos = levelManager.getPlayerStartPosition();
+            if (playerController && spawnPos) {
+                playerController.reset(spawnPos);
+            }
+            
+            // Update UI
+            updateUI();
+        }
+        
+        function updateUI() {
+            const gameState = levelManager.getGameState();
+            document.getElementById('keys').textContent = `${gameState.keysCollected}/${gameState.totalKeys}`;
+        }
+        
+        function onWindowResize() {
+            camera.aspect = window.innerWidth / window.innerHeight;
+            camera.updateProjectionMatrix();
+            renderer.setSize(window.innerWidth, window.innerHeight);
+        }
+        
+        function animate() {
+            requestAnimationFrame(animate);
+            
+            const deltaTime = clock.getDelta();
+            
+            // Update physics
+            if (physicsManager) {
+                physicsManager.update(deltaTime);
+            }
+            
+            // Update player
+            if (playerController) {
+                playerController.update(deltaTime);
+                
+                // Check collectibles
+                if (levelManager && playerController.mesh) {
+                    levelManager.checkCollectibles(playerController.mesh.position);
+                }
+            }
+            
+            // Update level animations
+            if (levelManager) {
+                levelManager.update(deltaTime);
+            }
+            
+            // Update camera
+            if (cameraController) {
+                cameraController.update(deltaTime);
+            }
+            
+            // Update UI
+            updateUI();
+            
+            // Render
+            renderer.render(scene, camera);
+        }
+        
+        // Initialize when page loads
+        window.addEventListener('load', init);
+        
+        // Listen for game events
+        window.addEventListener('keyCollected', (event) => {
+            document.getElementById('coins').textContent = 
+                parseInt(document.getElementById('coins').textContent) + 10;
+        });
+        
+        window.addEventListener('levelComplete', (event) => {
+            alert(`Level Complete! Keys: ${event.detail.keysCollected}/${event.detail.totalKeys}`);
+        });
+    </script>
+</body>
+</html>
