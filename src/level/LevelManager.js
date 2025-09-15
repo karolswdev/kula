@@ -3,7 +3,7 @@
  * Requirements: ARCH-002 (Data-Driven Levels), ARCH-003 (Grid Coordinate System), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring), PROD-007 (Hazards), PROD-011 (Modular Blocks), PROD-013 (Universal 3D Grid)
  */
 
-import * as THREE from 'three';
+// THREE is available as a global from the CDN
 import * as CANNON from 'cannon-es';
 import { Coin } from '../entities/Coin.js';
 import { Hazard } from '../entities/Hazard.js';

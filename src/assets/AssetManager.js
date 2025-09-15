@@ -8,16 +8,17 @@
  * then cached in memory for efficient instancing when placing multiple copies.
  */
 
-import * as THREE from 'three';
-import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
+// THREE is available as a global from the CDN
+// Note: GLTFLoader needs to be loaded separately or use the global THREE.GLTFLoader
 
 class AssetManager {
     constructor() {
         // Cache for loaded models
         this.modelCache = new Map();
         
-        // GLTF loader instance
-        this.gltfLoader = new GLTFLoader();
+        // GLTF loader instance - using GLTFLoader from Three.js examples
+        // This assumes GLTFLoader is available globally
+        this.gltfLoader = new THREE.GLTFLoader ? new THREE.GLTFLoader() : null;
         
         // Loading state tracking
         this.loadingQueue = new Map(); // Track in-progress loads to prevent duplicate requests
@@ -29,7 +30,18 @@ class AssetManager {
             networkLoads: 0
         };
         
-        console.log('AssetManager: Initialized with GLTFLoader');
+        if (this.gltfLoader) {
+            console.log('AssetManager: Initialized with GLTFLoader');
+        } else {
+            console.warn('AssetManager: GLTFLoader not available, creating fallback');
+            // Create a simple fallback that returns null
+            this.gltfLoader = {
+                load: (url, onLoad, onProgress, onError) => {
+                    console.warn(`AssetManager: Cannot load ${url} - GLTFLoader not available`);
+                    onError(new Error('GLTFLoader not available'));
+                }
+            };
+        }
     }
     
     /**
