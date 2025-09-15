@@ -1,0 +1,251 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>BehaviorSystem Test - TC-9.1</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background-color: #1e1e1e;
+            color: #00ff00;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        h1 {
+            color: #00ffff;
+        }
+        .test-output {
+            background-color: #0a0a0a;
+            border: 1px solid #00ff00;
+            padding: 20px;
+            border-radius: 5px;
+            white-space: pre-wrap;
+            font-size: 14px;
+        }
+        .pass {
+            color: #00ff00;
+        }
+        .fail {
+            color: #ff0000;
+        }
+        .info {
+            color: #ffff00;
+        }
+        button {
+            background-color: #00ff00;
+            color: #000;
+            border: none;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+            border-radius: 5px;
+        }
+        button:hover {
+            background-color: #00cc00;
+        }
+    </style>
+</head>
+<body>
+    <h1>Test Case TC-9.1: BehaviorSystem_OnLevelLoad_ParsesAndAttachesBehaviors</h1>
+    
+    <p>This test verifies that the BehaviorSystem correctly parses a behavior entry for a block at grid coordinate [5,1,5] and attaches an "elevator" behavior instance.</p>
+    
+    <p><strong>Expected console logs:</strong></p>
+    <ul>
+        <li>"Parsing behavior 'elevator' for target block at [5,1,5]."</li>
+        <li>"Behavior attached successfully."</li>
+    </ul>
+    
+    <button onclick="runTest()">Run Test</button>
+    
+    <h2>Test Output:</h2>
+    <div id="output" class="test-output"></div>
+    
+    <!-- Mock THREE global for testing -->
+    <script>
+        window.THREE = {
+            Vector3: class Vector3 {
+                constructor(x = 0, y = 0, z = 0) {
+                    this.x = x;
+                    this.y = y;
+                    this.z = z;
+                }
+                clone() {
+                    return new THREE.Vector3(this.x, this.y, this.z);
+                }
+                distanceTo(other) {
+                    const dx = this.x - other.x;
+                    const dy = this.y - other.y;
+                    const dz = this.z - other.z;
+                    return Math.sqrt(dx * dx + dy * dy + dz * dz);
+                }
+            }
+        };
+    </script>
+    
+    <script type="module">
+        import { BehaviorSystem } from '../src/behaviors/BehaviorSystem.js';
+        
+        window.runTest = async function() {
+            const output = document.getElementById('output');
+            output.innerHTML = '';
+            
+            // Capture console logs
+            const originalLog = console.log;
+            const originalWarn = console.warn;
+            const logs = [];
+            
+            console.log = function(...args) {
+                const message = args.join(' ');
+                logs.push({ type: 'log', message });
+                originalLog.apply(console, args);
+            };
+            
+            console.warn = function(...args) {
+                const message = args.join(' ');
+                logs.push({ type: 'warn', message });
+                originalWarn.apply(console, args);
+            };
+            
+            try {
+                output.innerHTML += '<span class="info">=====================================</span>\n';
+                output.innerHTML += '<span class="info">Test Case TC-9.1: BehaviorSystem Parsing Test</span>\n';
+                output.innerHTML += '<span class="info">=====================================</span>\n\n';
+                
+                // Create mock scene and physics manager
+                const mockScene = {
+                    add: () => {},
+                    remove: () => {}
+                };
+                
+                const mockPhysicsManager = {
+                    world: {
+                        addBody: () => {},
+                        removeBody: () => {}
+                    }
+                };
+                
+                // Create BehaviorSystem instance
+                const behaviorSystem = new BehaviorSystem(mockScene, mockPhysicsManager);
+                output.innerHTML += 'Created BehaviorSystem instance\n';
+                
+                // Create mock level data with behaviors array
+                const levelData = {
+                    gridUnitSize: 4,
+                    blocks: [
+                        { type: 'standard', at: [5, 1, 5] }
+                    ],
+                    behaviors: [
+                        {
+                            type: 'elevator',
+                            target: [5, 1, 5],
+                            config: {
+                                trigger: 'onPlayerContact',
+                                startPosition: [5, 1, 5],
+                                endPosition: [5, 3, 5],
+                                speed: 2.0,
+                                returnDelay: 3.0
+                            }
+                        }
+                    ]
+                };
+                
+                // Create mock platforms map with a block at [5,1,5]
+                const mockBlock = {
+                    name: 'block-standard-0',
+                    position: new THREE.Vector3(20, 4, 20),
+                    userData: {
+                        blockType: 'standard',
+                        gridPosition: [5, 1, 5]
+                    },
+                    geometry: {
+                        parameters: { width: 4 }
+                    }
+                };
+                
+                const platforms = new Map();
+                platforms.set('block-0', mockBlock);
+                
+                output.innerHTML += 'Created mock level data with elevator behavior at [5,1,5]\n\n';
+                output.innerHTML += '<span class="info">Parsing behaviors...</span>\n\n';
+                
+                // Clear logs before the important part
+                logs.length = 0;
+                
+                // Parse behaviors - this should trigger the required console logs
+                behaviorSystem.parseBehaviors(levelData, platforms);
+                
+                // Display captured logs
+                output.innerHTML += '<span class="info">Console Output:</span>\n';
+                logs.forEach(log => {
+                    if (log.message.includes('Parsing behavior') || log.message.includes('Behavior attached')) {
+                        output.innerHTML += `<span class="pass">${log.message}</span>\n`;
+                    } else {
+                        output.innerHTML += `${log.message}\n`;
+                    }
+                });
+                
+                output.innerHTML += '\n<span class="info">Test Verification:</span>\n';
+                
+                // Verify behavior was attached
+                const attachedBehaviors = behaviorSystem.behaviors;
+                const hasElevatorBehavior = Array.from(attachedBehaviors.values()).some(
+                    behavior => behavior.type === 'elevator' && 
+                               behavior.targetBlock === mockBlock
+                );
+                
+                // Check for required console logs
+                const hasParsingLog = logs.some(log => 
+                    log.message.includes("Parsing behavior 'elevator' for target block at [5,1,5]")
+                );
+                const hasAttachedLog = logs.some(log => 
+                    log.message.includes("Behavior attached successfully")
+                );
+                
+                if (hasParsingLog) {
+                    output.innerHTML += '<span class="pass">✅ PASS: Found required log: "Parsing behavior \'elevator\' for target block at [5,1,5]."</span>\n';
+                } else {
+                    output.innerHTML += '<span class="fail">❌ FAIL: Missing required log: "Parsing behavior \'elevator\' for target block at [5,1,5]."</span>\n';
+                }
+                
+                if (hasAttachedLog) {
+                    output.innerHTML += '<span class="pass">✅ PASS: Found required log: "Behavior attached successfully."</span>\n';
+                } else {
+                    output.innerHTML += '<span class="fail">❌ FAIL: Missing required log: "Behavior attached successfully."</span>\n';
+                }
+                
+                if (hasElevatorBehavior) {
+                    output.innerHTML += '<span class="pass">✅ PASS: Elevator behavior was successfully attached to block at [5,1,5]</span>\n';
+                } else {
+                    output.innerHTML += '<span class="fail">❌ FAIL: Elevator behavior was not attached</span>\n';
+                }
+                
+                // Verify block has behavior metadata
+                if (mockBlock.userData.hasBehavior && mockBlock.userData.behaviors) {
+                    output.innerHTML += '<span class="pass">✅ PASS: Block metadata was updated with behavior references</span>\n';
+                } else {
+                    output.innerHTML += '<span class="fail">❌ FAIL: Block metadata was not updated</span>\n';
+                }
+                
+                const allTestsPassed = hasParsingLog && hasAttachedLog && hasElevatorBehavior && 
+                                      mockBlock.userData.hasBehavior && mockBlock.userData.behaviors;
+                
+                output.innerHTML += '\n<span class="info">=====================================</span>\n';
+                if (allTestsPassed) {
+                    output.innerHTML += '<span class="pass">Test Case TC-9.1: ALL TESTS PASSED ✅</span>\n';
+                } else {
+                    output.innerHTML += '<span class="fail">Test Case TC-9.1: SOME TESTS FAILED ❌</span>\n';
+                }
+                output.innerHTML += '<span class="info">=====================================</span>\n';
+                
+            } finally {
+                // Restore console
+                console.log = originalLog;
+                console.warn = originalWarn;
+            }
+        };
+    </script>
+</body>
+</html>

@@ -10,6 +10,7 @@ import { LevelManager } from '../level/LevelManager.js';
 import { UIManager } from '../ui/UIManager.js';
 import { GameState } from '../game/GameState.js';
 import { AudioManager } from '../audio/AudioManager.js';
+import { BehaviorSystem } from '../behaviors/BehaviorSystem.js';
 
 export class Game {
     constructor() {
@@ -26,6 +27,7 @@ export class Game {
         this.levelManager = null;
         this.uiManager = null;
         this.audioManager = null; // Requirement: PROD-012
+        this.behaviorSystem = null; // Requirement: ARCH-005
         
         // Container for the canvas
         this.container = document.getElementById('game-container');
@@ -164,6 +166,9 @@ export class Game {
         this.audioManager = new AudioManager();
         this.audioManager.loadSounds();
         
+        // Initialize behavior system - Requirement: ARCH-005
+        this.behaviorSystem = new BehaviorSystem(this.scene, this.physicsManager);
+        
         console.log('Game::initializeSystems - All systems initialized');
     }
     
@@ -206,6 +211,14 @@ export class Game {
         try {
             // Load the level using LevelManager
             await this.levelManager.load(levelPath);
+            
+            // Parse behaviors from the loaded level - Requirement: ARCH-005
+            if (this.behaviorSystem) {
+                this.behaviorSystem.parseBehaviors(
+                    this.levelManager.currentLevel,
+                    this.levelManager.platforms
+                );
+            }
             
             // Get player start position from level
             const startPos = this.levelManager.getPlayerStartPosition();
@@ -348,6 +361,16 @@ export class Game {
         // Update level manager (animations, etc) - Requirement: ARCH-002
         if (this.levelManager) {
             this.levelManager.update(deltaTime);
+        }
+        
+        // Update behavior system - Requirement: ARCH-005
+        if (this.behaviorSystem) {
+            this.behaviorSystem.update(deltaTime);
+            
+            // Check for behavior triggers based on player position
+            if (this.playerMesh) {
+                this.behaviorSystem.checkBehaviorTriggers(this.playerMesh.position);
+            }
         }
         
         // Update camera controller - Requirement: PROD-009

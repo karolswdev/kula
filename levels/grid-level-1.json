@@ -41,6 +41,42 @@
     {
       "type": "nature_rock_platform",
       "at": [5, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [5, 1, 5]
+    }
+  ],
+  "behaviors": [
+    {
+      "type": "elevator",
+      "target": [5, 1, 5],
+      "config": {
+        "trigger": "onPlayerContact",
+        "startPosition": [5, 1, 5],
+        "endPosition": [5, 3, 5],
+        "speed": 2.0,
+        "returnDelay": 3.0
+      }
+    },
+    {
+      "type": "timed_disappear",
+      "target": [3, 0, 0],
+      "config": {
+        "interval": 2.0,
+        "visibleDuration": 1.5,
+        "invisibleDuration": 0.5
+      }
+    },
+    {
+      "type": "switch",
+      "target": [2, 0, 2],
+      "config": {
+        "trigger": "onPlayerContact",
+        "targetBlock": [4, 0, 0],
+        "action": "activate",
+        "visual": "button"
+      }
     }
   ],
   "player": {
