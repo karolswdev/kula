@@ -139,6 +139,11 @@ export class LevelManager {
         if (this.currentLevel.collectibles) {
             this.createGridCoins(this.currentLevel.collectibles);
         }
+        
+        // Process decorations (non-collidable visual elements)
+        if (this.currentLevel.decorations) {
+            await this.createGridDecorations(this.currentLevel.decorations);
+        }
     }
     
     /**
@@ -309,8 +314,14 @@ export class LevelManager {
             this.platforms.set(`block-${index}`, mesh);
             
             // Create physics body using simplified shape from registry
+            // Skip physics body creation for decorations (non-collidable)
             if (this.physicsManager && this.physicsManager.world) {
-                this.createBlockPhysicsBody(blockDef, worldPos, index);
+                // Check if this is a decoration (should not have collision)
+                if (blockDef.behavior !== 'decoration') {
+                    this.createBlockPhysicsBody(blockDef, worldPos, index);
+                } else {
+                    console.log(`LevelManager::createGridBlocks - Skipping physics for decoration: ${blockData.type}`);
+                }
             }
         }
     }
@@ -429,6 +440,86 @@ export class LevelManager {
             
             // Use existing coin creation logic
             this.createCoins([coinWorldData]);
+        });
+    }
+    
+    /**
+     * Create decorations from grid-based level data
+     * These are non-collidable visual elements that enhance the environment
+     * Requirement: PROD-016 - Thematic Worlds
+     */
+    async createGridDecorations(decorationsData) {
+        console.log(`LevelManager::createGridDecorations - Creating ${decorationsData.length} decorations`);
+        
+        // First preload all decoration models
+        const uniqueModelPaths = new Set();
+        decorationsData.forEach(decorData => {
+            const blockDef = assetRegistry.getBlockDefinition(decorData.type);
+            if (blockDef && blockDef.model) {
+                uniqueModelPaths.add(blockDef.model);
+            }
+        });
+        
+        // Preload models
+        if (uniqueModelPaths.size > 0) {
+            const modelPathsArray = Array.from(uniqueModelPaths);
+            await assetManager.preloadModels(modelPathsArray);
+        }
+        
+        // Create decoration entities
+        decorationsData.forEach((decorData, index) => {
+            // Decorations are essentially blocks with behavior: 'decoration'
+            // We can reuse the block creation logic
+            const blockDataWithDecoration = {
+                type: decorData.type,
+                at: decorData.at
+            };
+            
+            // Get block definition from AssetRegistry
+            const blockDef = assetRegistry.getBlockDefinition(decorData.type);
+            if (!blockDef) {
+                console.warn(`LevelManager::createGridDecorations - Unknown decoration type: ${decorData.type}`);
+                return;
+            }
+            
+            // Calculate world position from grid coordinates
+            const worldPos = this.gridToWorld(decorData.at);
+            
+            let mesh;
+            
+            // Try to load actual .glb model from AssetManager
+            if (blockDef.model) {
+                const modelInstance = assetManager.getInstance(blockDef.model);
+                
+                if (modelInstance) {
+                    mesh = modelInstance;
+                    const scaleFactor = this.gridUnitSize / 4;
+                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    console.log(`LevelManager::createGridDecorations - Using decoration model: ${blockDef.model}`);
+                } else {
+                    console.warn(`LevelManager::createGridDecorations - Model not loaded: ${blockDef.model}`);
+                    return;
+                }
+            } else {
+                console.warn(`LevelManager::createGridDecorations - No model specified for decoration: ${decorData.type}`);
+                return;
+            }
+            
+            // Set position and properties
+            mesh.position.copy(worldPos);
+            mesh.name = `decoration-${decorData.type}-${index}`;
+            mesh.userData = {
+                blockType: decorData.type,
+                gridPosition: decorData.at,
+                blockDefinition: blockDef,
+                isDecoration: true
+            };
+            
+            // Add to scene and track (no physics body for decorations)
+            this.scene.add(mesh);
+            this.levelEntities.push(mesh);
+            
+            console.log(`LevelManager::createGridDecorations - Created decoration '${decorData.type}' at grid[${decorData.at}] -> world(${worldPos.x}, ${worldPos.y}, ${worldPos.z})`);
         });
     }
     

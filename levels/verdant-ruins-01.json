@@ -1,0 +1,178 @@
+{
+  "name": "Verdant Ruins - Overgrown Entry",
+  "theme": "nature",
+  "gridUnitSize": 4,
+  "blocks": [
+    {
+      "type": "stone_platform",
+      "at": [0, 0, 0]
+    },
+    {
+      "type": "stone_platform",
+      "at": [1, 0, 0]
+    },
+    {
+      "type": "stone_platform",
+      "at": [2, 0, 0]
+    },
+    {
+      "type": "grass_platform",
+      "at": [3, 0, 0]
+    },
+    {
+      "type": "grass_platform",
+      "at": [4, 0, 0]
+    },
+    {
+      "type": "grass_platform",
+      "at": [5, 0, 0]
+    },
+    {
+      "type": "standard_platform",
+      "at": [6, 0, 0]
+    },
+    {
+      "type": "standard_platform",
+      "at": [7, 0, 0]
+    },
+    {
+      "type": "brick_wall",
+      "at": [0, 1, 0]
+    },
+    {
+      "type": "brick_wall",
+      "at": [0, 2, 0]
+    },
+    {
+      "type": "grass_platform",
+      "at": [3, 1, 0]
+    },
+    {
+      "type": "grass_platform",
+      "at": [4, 1, 0]
+    },
+    {
+      "type": "stone_platform",
+      "at": [7, 1, 0]
+    },
+    {
+      "type": "stone_platform",
+      "at": [7, 2, 0]
+    },
+    {
+      "type": "standard_platform",
+      "at": [7, 3, 0]
+    },
+    {
+      "type": "grass_platform",
+      "at": [5, 0, -1]
+    },
+    {
+      "type": "grass_platform",
+      "at": [5, 0, -2]
+    },
+    {
+      "type": "stone_platform",
+      "at": [5, 0, -3]
+    },
+    {
+      "type": "stone_platform",
+      "at": [4, 0, -3]
+    },
+    {
+      "type": "stone_platform",
+      "at": [3, 0, -3]
+    },
+    {
+      "type": "brick_wall",
+      "at": [3, 1, -3]
+    }
+  ],
+  "player": {
+    "spawn": [0, 3, 0],
+    "lives": 3
+  },
+  "objectives": {
+    "keys": [
+      {
+        "id": "key1",
+        "at": [4, 2, 0]
+      },
+      {
+        "id": "key2",
+        "at": [7, 4, 0]
+      },
+      {
+        "id": "key3",
+        "at": [3, 1, -3]
+      }
+    ],
+    "exit": {
+      "at": [5, 0, -3]
+    }
+  },
+  "collectibles": [
+    {
+      "type": "coin",
+      "at": [2, 1, 0],
+      "value": 10
+    },
+    {
+      "type": "coin",
+      "at": [5, 1, 0],
+      "value": 10
+    },
+    {
+      "type": "coin",
+      "at": [5, 1, -1],
+      "value": 20
+    },
+    {
+      "type": "coin",
+      "at": [4, 1, -3],
+      "value": 20
+    }
+  ],
+  "decorations": [
+    {
+      "type": "decorative_bush",
+      "at": [2, 0, 1]
+    },
+    {
+      "type": "fern",
+      "at": [4, 0, 1]
+    },
+    {
+      "type": "flower",
+      "at": [6, 0, 1]
+    },
+    {
+      "type": "mushroom",
+      "at": [1, 0, -1]
+    },
+    {
+      "type": "tree",
+      "at": [0, 0, -2]
+    },
+    {
+      "type": "pine_tree",
+      "at": [7, 0, -1]
+    },
+    {
+      "type": "decorative_bush",
+      "at": [3, 0, 1]
+    },
+    {
+      "type": "fern",
+      "at": [5, 0, 1]
+    },
+    {
+      "type": "flower",
+      "at": [4, 0, -2]
+    },
+    {
+      "type": "mushroom",
+      "at": [3, 0, -2]
+    }
+  ]
+}
