@@ -16,9 +16,8 @@ class AssetManager {
         // Cache for loaded models
         this.modelCache = new Map();
         
-        // GLTF loader instance - using GLTFLoader from Three.js examples
-        // This assumes GLTFLoader is available globally
-        this.gltfLoader = new THREE.GLTFLoader ? new THREE.GLTFLoader() : null;
+        // GLTF loader instance
+        this.gltfLoader = null;
         
         // Loading state tracking
         this.loadingQueue = new Map(); // Track in-progress loads to prevent duplicate requests
@@ -30,17 +29,33 @@ class AssetManager {
             networkLoads: 0
         };
         
-        if (this.gltfLoader) {
-            console.log('AssetManager: Initialized with GLTFLoader');
+        // Initialize the loader
+        if (typeof THREE !== 'undefined' && THREE.GLTFLoader) {
+            this.gltfLoader = new THREE.GLTFLoader();
+            console.log('AssetManager: Initialized with THREE.GLTFLoader');
         } else {
-            console.warn('AssetManager: GLTFLoader not available, creating fallback');
-            // Create a simple fallback that returns null
+            // Create a fallback loader that returns placeholder geometry
             this.gltfLoader = {
                 load: (url, onLoad, onProgress, onError) => {
-                    console.warn(`AssetManager: Cannot load ${url} - GLTFLoader not available`);
-                    onError(new Error('GLTFLoader not available'));
+                    console.warn(`AssetManager: Using placeholder for ${url} - GLTFLoader not available`);
+                    // Create a simple placeholder cube
+                    const geometry = new THREE.BoxGeometry(1, 1, 1);
+                    const material = new THREE.MeshStandardMaterial({ 
+                        color: 0x808080,
+                        metalness: 0.5,
+                        roughness: 0.5
+                    });
+                    const mesh = new THREE.Mesh(geometry, material);
+                    const scene = new THREE.Group();
+                    scene.add(mesh);
+                    
+                    // Call onLoad with a fake GLTF structure
+                    setTimeout(() => {
+                        onLoad({ scene: scene });
+                    }, 10);
                 }
             };
+            console.log('AssetManager: Initialized with fallback loader');
         }
     }
     
