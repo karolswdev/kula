@@ -27,7 +27,7 @@ Here is the complete, actionable plan for Phase 9.
 > 6.  **Finalize Story with Merge:** Once the orchestrator (acting as the QA agent) provides approval and a rationale, you **MUST** merge the pull request using the `gh` CLI and the provided rationale. Then, and only then, you may mark the story's main checkbox as complete.
 > 7.  **Update Progress in Real-Time:** Meticulously update every checkbox (`[ ]` to `[x]`) in this document as you complete each step. Your progress tracking must be flawless.
 
-## [ ] PHASE-9: The Behavior System Implementation
+## [x] PHASE-9: The Behavior System Implementation
 
 ---
 
@@ -102,7 +102,7 @@ Here is the complete, actionable plan for Phase 9.
 > 5.  **Finalize Story:**
 >     *   **Instruction:** Update this story's main checkbox from `[ ]` to `[x]`.
 
-#### [ ] STORY-9.2: Implement Dynamic Block Behaviors
+#### [x] STORY-9.2: Implement Dynamic Block Behaviors
 
 1.  **Task:** Implement the "Elevator" behavior handler.
     *   **Instruction:** `In src/behaviors/, create a handler for the 'elevator' type. It must read properties like 'endPosition', 'speed', and 'trigger' from the behavior definition. When its trigger condition (e.g., 'onPlayerContact') is met, it must smoothly move its associated block's mesh and physics body to the target position.`
@@ -147,7 +147,7 @@ Here is the complete, actionable plan for Phase 9.
 
 #### Final Acceptance Gate
 
-*   [ ] **Final Full Regression Test Passed:**
+*   [x] **Final Full Regression Test Passed:**
     *   **Instruction:** `Verify that all stories (9.1, 9.2) are marked [x]. Load a new test level that incorporates all new behavior types simultaneously to ensure they work together without conflicts. Run the full E2E test suite ('npm test') to ensure no regressions.`
     *   **Evidence:** Provide a final summary statement confirming both stories are merged, all new behaviors are functional, and the automated test suite passes.
 *   **Final Instruction:** Once the final verification is complete, change `[ ] PHASE-9` to `[x] PHASE-9`.
