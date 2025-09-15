@@ -6,8 +6,8 @@
  */
 
 import * as THREE from 'three';
-import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { EditorControls } from './EditorControls.js';
 import assetRegistry from '../assets/AssetRegistry.js';
 
 export class LevelEditor {
@@ -116,13 +116,15 @@ export class LevelEditor {
     }
     
     setupControls() {
-        this.controls = new OrbitControls(this.camera, this.canvas);
+        // Use dedicated EditorControls for better camera control
+        this.controls = new EditorControls(this.camera, this.canvas);
         this.controls.enableDamping = true;
         this.controls.dampingFactor = 0.05;
-        this.controls.target.set(0, 0, 0);
-        this.controls.maxPolarAngle = Math.PI / 2.2;
+        this.controls.setTarget(0, 0, 0);
         this.controls.minDistance = 10;
         this.controls.maxDistance = 100;
+        
+        console.log('EditorControls setup complete - Right-click: orbit, Middle-click: pan, Scroll: zoom');
     }
     
     setupLighting() {

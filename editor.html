@@ -111,6 +111,22 @@
             text-align: center;
             word-wrap: break-word;
         }
+        
+        .block-button.visual-block {
+            padding: 8px;
+            min-height: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .block-button.visual-block img {
+            image-rendering: crisp-edges;
+            image-rendering: -webkit-crisp-edges;
+            image-rendering: pixelated;
+            background: #1a1a1a;
+            border: 1px solid #444;
+        }
 
         .block-button:hover {
             background: #4a4a4a;
@@ -431,8 +447,10 @@
         <!-- Actions -->
         <div class="panel-section">
             <h3>Actions</h3>
-            <button class="action-button" id="generate-json">Generate JSON</button>
-            <button class="action-button" id="load-json">Load JSON</button>
+            <button class="action-button" id="save-to-file">Save to File</button>
+            <button class="action-button" id="load-from-file">Load from File</button>
+            <button class="action-button" id="generate-json">View JSON</button>
+            <button class="action-button" id="load-json">Import JSON</button>
             <button class="action-button" id="validate-level">Validate Level</button>
             <button class="action-button danger" id="clear-level">Clear Level</button>
         </div>
