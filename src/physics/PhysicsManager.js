@@ -1,7 +1,9 @@
 /**
  * PhysicsManager - Manages physics simulation using Cannon.js
- * Requirements: ARCH-001, PROD-002, PROD-003
+ * Requirements: ARCH-001, PROD-002, PROD-003, ARCH-006 (Physics Optimization)
  */
+
+import * as CANNON from 'cannon-es';
 
 export class PhysicsManager {
     constructor() {

@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 7 Story 7.2 - Test Runner</title>
+    <style>
+        body {
+            font-family: monospace;
+            padding: 20px;
+            background: #1a1a1a;
+            color: #0f0;
+        }
+        pre {
+            background: #000;
+            padding: 10px;
+            border: 1px solid #0f0;
+            overflow-x: auto;
+        }
+        .error {
+            color: #f00;
+        }
+        .success {
+            color: #0f0;
+        }
+        h1 {
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+    <h1>PHASE 7 - STORY 7.2: Asset Integration & Physics Optimization</h1>
+    <pre id="output"></pre>
+    
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "./node_modules/three/build/three.module.js",
+            "three/examples/jsm/loaders/GLTFLoader.js": "./node_modules/three/examples/jsm/loaders/GLTFLoader.js",
+            "cannon-es": "./node_modules/cannon-es/dist/cannon-es.js"
+        }
+    }
+    </script>
+    
+    <script type="module">
+        // Capture console output
+        const output = document.getElementById('output');
+        const originalLog = console.log;
+        const originalWarn = console.warn;
+        const originalError = console.error;
+        
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            output.textContent += args.map(arg => 
+                typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+            ).join(' ') + '\n';
+        };
+        
+        console.warn = function(...args) {
+            originalWarn.apply(console, args);
+            output.innerHTML += '<span class="error">⚠️ ' + args.join(' ') + '</span>\n';
+        };
+        
+        console.error = function(...args) {
+            originalError.apply(console, args);
+            output.innerHTML += '<span class="error">❌ ' + args.join(' ') + '</span>\n';
+        };
+        
+        // Import and run tests
+        import { runStory72Tests } from './tests/test-grid-system.js';
+        
+        console.log('Starting PHASE 7 - STORY 7.2 Tests...\n');
+        console.log('This will test:');
+        console.log('- TC-7.3: Asset loading and instancing optimization');
+        console.log('- TC-7.4: Simplified physics colliders for complex models\n');
+        
+        try {
+            const passed = await runStory72Tests();
+            
+            if (passed) {
+                console.log('\n🎉 All Story 7.2 tests PASSED!');
+            } else {
+                console.log('\n⚠️ Some Story 7.2 tests FAILED - review output above');
+            }
+        } catch (error) {
+            console.error('Test execution failed:', error);
+            console.error('Stack:', error.stack);
+        }
+    </script>
+</body>
+</html>
