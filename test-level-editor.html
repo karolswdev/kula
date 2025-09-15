@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Level Editor Test Suite - TC-10.3 & TC-10.4</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            margin: 0;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0, 0, 0, 0.7);
+            padding: 30px;
+            border-radius: 10px;
+        }
+        
+        h1 {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+        
+        .test-case {
+            background: rgba(255, 255, 255, 0.1);
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 5px;
+            border-left: 4px solid #667eea;
+        }
+        
+        .test-case h2 {
+            margin-top: 0;
+            color: #9b59b6;
+        }
+        
+        .test-status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+        
+        .status-pending {
+            background: #f39c12;
+        }
+        
+        .status-running {
+            background: #3498db;
+        }
+        
+        .status-passed {
+            background: #27ae60;
+        }
+        
+        .status-failed {
+            background: #e74c3c;
+        }
+        
+        .test-output {
+            background: #1a1a1a;
+            padding: 15px;
+            margin-top: 15px;
+            border-radius: 5px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+            white-space: pre-wrap;
+            color: #4ade80;
+        }
+        
+        .test-button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: bold;
+            margin-right: 10px;
+            margin-top: 10px;
+        }
+        
+        .test-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+        
+        .test-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        #editor-frame {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #667eea;
+            border-radius: 5px;
+            margin-top: 20px;
+            display: none;
+        }
+        
+        .json-display {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>Level Editor Test Suite</h1>
+        
+        <!-- Test Case TC-10.3 -->
+        <div class="test-case">
+            <h2>TC-10.3: LevelEditor_OnGridClick_AddsBlockToLevelData
+                <span class="test-status status-pending" id="tc-10-3-status">PENDING</span>
+            </h2>
+            <p><strong>Test Logic:</strong> Click on an empty grid cell to add a block, verify the internal JSON data structure is updated.</p>
+            
+            <button class="test-button" id="run-tc-10-3">Run Test TC-10.3</button>
+            <button class="test-button" id="manual-tc-10-3">Manual Test TC-10.3</button>
+            
+            <div class="test-output" id="tc-10-3-output">
+Test not yet run. Click "Run Test" to execute automated test or "Manual Test" for instructions.
+            </div>
+        </div>
+        
+        <!-- Test Case TC-10.4 -->
+        <div class="test-case">
+            <h2>TC-10.4: LevelEditor_OnSave_GeneratesValidLevelJSON
+                <span class="test-status status-pending" id="tc-10-4-status">PENDING</span>
+            </h2>
+            <p><strong>Test Logic:</strong> Place blocks in the editor and generate valid JSON that can be used in the game.</p>
+            
+            <button class="test-button" id="run-tc-10-4">Run Test TC-10.4</button>
+            <button class="test-button" id="manual-tc-10-4">Manual Test TC-10.4</button>
+            
+            <div class="test-output" id="tc-10-4-output">
+Test not yet run. Click "Run Test" to execute automated test or "Manual Test" for instructions.
+            </div>
+            
+            <div class="json-display" id="generated-json" style="display: none;">
+                <h3>Generated JSON:</h3>
+                <pre id="json-content"></pre>
+            </div>
+        </div>
+        
+        <!-- Editor Frame for Testing -->
+        <div>
+            <h2>Live Editor Instance</h2>
+            <button class="test-button" id="open-editor">Open Editor in Frame</button>
+            <button class="test-button" id="open-editor-window">Open Editor in New Window</button>
+            <iframe id="editor-frame" src="editor.html"></iframe>
+        </div>
+    </div>
+    
+    <script type="module">
+        // Import the editor classes for testing
+        import { LevelEditor } from './src/editor/LevelEditor.js';
+        import { EditorUI } from './src/editor/EditorUI.js';
+        
+        // Test Case TC-10.3: Block placement and data update
+        document.getElementById('run-tc-10-3').addEventListener('click', async () => {
+            const statusEl = document.getElementById('tc-10-3-status');
+            const outputEl = document.getElementById('tc-10-3-output');
+            
+            statusEl.className = 'test-status status-running';
+            statusEl.textContent = 'RUNNING';
+            outputEl.textContent = 'Initializing test environment...\n';
+            
+            try {
+                // Create a canvas for testing
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                // Initialize editor
+                outputEl.textContent += 'Creating LevelEditor instance...\n';
+                const editor = new LevelEditor(canvas);
+                await editor.initialize();
+                
+                // Get initial state
+                const initialData = JSON.parse(JSON.stringify(editor.getLevelData()));
+                outputEl.textContent += '\n=== INITIAL LEVEL DATA ===\n';
+                outputEl.textContent += 'Blocks count: ' + initialData.blocks.length + '\n';
+                outputEl.textContent += JSON.stringify(initialData.blocks, null, 2) + '\n';
+                
+                // Simulate block placement at [3, 0, 3]
+                outputEl.textContent += '\n=== PLACING BLOCK ===\n';
+                outputEl.textContent += 'Block type: standard_platform\n';
+                outputEl.textContent += 'Grid position: [3, 0, 3]\n';
+                
+                editor.selectedBlockType = 'standard_platform';
+                await editor.placeBlock({ x: 3, y: 0, z: 3 }, 'standard_platform');
+                
+                // Get updated state
+                const updatedData = editor.getLevelData();
+                outputEl.textContent += '\n=== UPDATED LEVEL DATA ===\n';
+                outputEl.textContent += 'Blocks count: ' + updatedData.blocks.length + '\n';
+                outputEl.textContent += JSON.stringify(updatedData.blocks, null, 2) + '\n';
+                
+                // Verify block was added
+                const newBlock = updatedData.blocks.find(b => 
+                    b.at[0] === 3 && b.at[1] === 0 && b.at[2] === 3
+                );
+                
+                if (newBlock && newBlock.type === 'standard_platform') {
+                    outputEl.textContent += '\n✅ TEST PASSED: Block successfully added to level data!\n';
+                    outputEl.textContent += 'New block entry: ' + JSON.stringify(newBlock, null, 2);
+                    statusEl.className = 'test-status status-passed';
+                    statusEl.textContent = 'PASSED';
+                } else {
+                    outputEl.textContent += '\n❌ TEST FAILED: Block was not added to level data correctly.\n';
+                    statusEl.className = 'test-status status-failed';
+                    statusEl.textContent = 'FAILED';
+                }
+                
+            } catch (error) {
+                outputEl.textContent += '\n❌ TEST ERROR: ' + error.message + '\n';
+                outputEl.textContent += error.stack;
+                statusEl.className = 'test-status status-failed';
+                statusEl.textContent = 'ERROR';
+            }
+        });
+        
+        // Manual test instructions for TC-10.3
+        document.getElementById('manual-tc-10-3').addEventListener('click', () => {
+            const outputEl = document.getElementById('tc-10-3-output');
+            outputEl.textContent = `=== MANUAL TEST INSTRUCTIONS FOR TC-10.3 ===
+
+1. Open the Level Editor (click "Open Editor in New Window" below)
+2. In the editor, look at the right panel and find the "Block Palette"
+3. Select "Standard" block type
+4. Click on the grid at position approximately [3, 0, 3]
+   (You can see the current grid position in the top-left corner)
+5. Open the browser console (F12)
+6. You should see console logs showing:
+   - "Block placed: standard_platform at {x: 3, y: 0, z: 3}"
+   - "Level data updated:" followed by the JSON structure
+
+7. Click "Generate JSON" button in the editor
+8. Verify the JSON contains a block entry like:
+   {
+     "type": "standard_platform",
+     "at": [3, 0, 3]
+   }
+
+EXPECTED RESULT:
+- The block appears in the 3D view
+- Console shows the level data BEFORE and AFTER
+- The new block entry is present in the blocks array
+
+To mark as passed, verify all steps complete successfully.`;
+        });
+        
+        // Test Case TC-10.4: JSON generation
+        document.getElementById('run-tc-10-4').addEventListener('click', async () => {
+            const statusEl = document.getElementById('tc-10-4-status');
+            const outputEl = document.getElementById('tc-10-4-output');
+            const jsonDisplay = document.getElementById('generated-json');
+            const jsonContent = document.getElementById('json-content');
+            
+            statusEl.className = 'test-status status-running';
+            statusEl.textContent = 'RUNNING';
+            outputEl.textContent = 'Initializing test environment...\n';
+            
+            try {
+                // Create a canvas for testing
+                const canvas = document.createElement('canvas');
+                canvas.width = 800;
+                canvas.height = 600;
+                
+                // Initialize editor
+                outputEl.textContent += 'Creating LevelEditor instance...\n';
+                const editor = new LevelEditor(canvas);
+                await editor.initialize();
+                
+                // Place several blocks to create a simple level
+                outputEl.textContent += '\n=== CREATING TEST LEVEL ===\n';
+                
+                // Add platforms
+                outputEl.textContent += 'Adding platforms...\n';
+                await editor.placeBlock({ x: 0, y: 0, z: 0 }, 'stone_platform');
+                await editor.placeBlock({ x: 1, y: 0, z: 0 }, 'stone_platform');
+                await editor.placeBlock({ x: 2, y: 0, z: 0 }, 'grass_platform');
+                await editor.placeBlock({ x: 3, y: 0, z: 0 }, 'grass_platform');
+                
+                // Add player spawn
+                outputEl.textContent += 'Setting player spawn at [0, 1, 0]...\n';
+                editor.setPlayerSpawn({ x: 0, y: 1, z: 0 });
+                
+                // Add a key
+                outputEl.textContent += 'Adding key at [3, 1, 0]...\n';
+                editor.addKey({ x: 3, y: 1, z: 0 });
+                
+                // Add exit
+                outputEl.textContent += 'Setting exit at [3, 0, 0]...\n';
+                editor.setExit({ x: 3, y: 0, z: 0 });
+                
+                // Set level metadata
+                editor.setLevelName('Test Level TC-10.4');
+                editor.setLevelTheme('nature');
+                
+                // Generate JSON
+                outputEl.textContent += '\n=== GENERATING JSON ===\n';
+                const generatedJSON = editor.generateJSON();
+                
+                if (generatedJSON) {
+                    // Parse to validate JSON structure
+                    const levelData = JSON.parse(generatedJSON);
+                    
+                    outputEl.textContent += '✅ Valid JSON generated!\n';
+                    outputEl.textContent += '\nValidation checks:\n';
+                    
+                    // Validate structure
+                    const checks = [
+                        { 
+                            name: 'Has name property', 
+                            valid: levelData.name === 'Test Level TC-10.4' 
+                        },
+                        { 
+                            name: 'Has theme property', 
+                            valid: levelData.theme === 'nature' 
+                        },
+                        { 
+                            name: 'Has blocks array', 
+                            valid: Array.isArray(levelData.blocks) && levelData.blocks.length > 0 
+                        },
+                        { 
+                            name: 'Has player spawn', 
+                            valid: levelData.player && Array.isArray(levelData.player.spawn) 
+                        },
+                        { 
+                            name: 'Has objectives with keys', 
+                            valid: levelData.objectives && Array.isArray(levelData.objectives.keys) && levelData.objectives.keys.length > 0 
+                        },
+                        { 
+                            name: 'Has exit', 
+                            valid: levelData.objectives && levelData.objectives.exit && Array.isArray(levelData.objectives.exit.at) 
+                        }
+                    ];
+                    
+                    let allPassed = true;
+                    checks.forEach(check => {
+                        outputEl.textContent += `  ${check.valid ? '✅' : '❌'} ${check.name}\n`;
+                        if (!check.valid) allPassed = false;
+                    });
+                    
+                    // Display the JSON
+                    jsonDisplay.style.display = 'block';
+                    jsonContent.textContent = generatedJSON;
+                    
+                    if (allPassed) {
+                        outputEl.textContent += '\n✅ TEST PASSED: Valid level JSON generated successfully!\n';
+                        statusEl.className = 'test-status status-passed';
+                        statusEl.textContent = 'PASSED';
+                    } else {
+                        outputEl.textContent += '\n❌ TEST FAILED: JSON structure is incomplete.\n';
+                        statusEl.className = 'test-status status-failed';
+                        statusEl.textContent = 'FAILED';
+                    }
+                    
+                } else {
+                    outputEl.textContent += '❌ TEST FAILED: No JSON was generated.\n';
+                    statusEl.className = 'test-status status-failed';
+                    statusEl.textContent = 'FAILED';
+                }
+                
+            } catch (error) {
+                outputEl.textContent += '\n❌ TEST ERROR: ' + error.message + '\n';
+                outputEl.textContent += error.stack;
+                statusEl.className = 'test-status status-failed';
+                statusEl.textContent = 'ERROR';
+            }
+        });
+        
+        // Manual test instructions for TC-10.4
+        document.getElementById('manual-tc-10-4').addEventListener('click', () => {
+            const outputEl = document.getElementById('tc-10-4-output');
+            outputEl.textContent = `=== MANUAL TEST INSTRUCTIONS FOR TC-10.4 ===
+
+1. Open the Level Editor (click "Open Editor in New Window" below)
+2. Create a simple level by:
+   a. Place at least 3-4 platform blocks
+   b. Click "Player Start" button and place it on the grid
+   c. Click "Key" button and place at least one key
+   d. Click "Exit" button and place the exit
+   e. Optionally add some decorations
+
+3. In the control panel, set:
+   - Level Name: "Manual Test Level"
+   - Theme: "Verdant Ruins"
+
+4. Click the "Generate JSON" button
+
+5. A modal should appear with the generated JSON
+
+EXPECTED RESULT:
+- The JSON should be properly formatted
+- It should contain:
+  * "name": "Manual Test Level"
+  * "theme": "verdant-ruins"
+  * "blocks": [...] with your placed blocks
+  * "player": { "spawn": [...] }
+  * "objectives": { "keys": [...], "exit": {...} }
+
+6. Click "Copy to Clipboard" to copy the JSON
+7. The JSON should be valid and loadable in the game
+
+To verify the JSON is valid:
+- It should parse without errors
+- All coordinates should be integer values
+- The structure matches the expected format`;
+        });
+        
+        // Open editor in frame
+        document.getElementById('open-editor').addEventListener('click', () => {
+            const frame = document.getElementById('editor-frame');
+            frame.style.display = 'block';
+            frame.src = 'editor.html';
+        });
+        
+        // Open editor in new window
+        document.getElementById('open-editor-window').addEventListener('click', () => {
+            window.open('editor.html', 'LevelEditor', 'width=1400,height=800');
+        });
+    </script>
+</body>
+</html>
