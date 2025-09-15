@@ -1,0 +1,77 @@
+{
+  "theme": "nature",
+  "gridUnitSize": 4,
+  "blocks": [
+    {
+      "type": "standard",
+      "at": [0, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [1, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [2, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [2, 0, 1]
+    },
+    {
+      "type": "standard",
+      "at": [2, 0, 2]
+    },
+    {
+      "type": "standard",
+      "at": [0, 1, 0]
+    },
+    {
+      "type": "standard",
+      "at": [0, 2, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [3, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [4, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [5, 0, 0]
+    }
+  ],
+  "player": {
+    "spawn": [0, 1, 0],
+    "lives": 3
+  },
+  "objectives": {
+    "keys": [
+      {
+        "id": "key1",
+        "at": [2, 1, 1]
+      },
+      {
+        "id": "key2",
+        "at": [5, 1, 0]
+      }
+    ],
+    "exit": {
+      "at": [5, 0, 0]
+    }
+  },
+  "collectibles": [
+    {
+      "type": "coin",
+      "at": [1, 1, 0],
+      "value": 10
+    },
+    {
+      "type": "coin",
+      "at": [3, 1, 0],
+      "value": 10
+    }
+  ]
+}

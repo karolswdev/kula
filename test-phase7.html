@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Phase 7 - Grid System Tests</title>
+    <style>
+        body {
+            font-family: 'Courier New', monospace;
+            background: #1a1a1a;
+            color: #00ff00;
+            padding: 20px;
+            margin: 0;
+        }
+        #console {
+            background: #000;
+            border: 2px solid #00ff00;
+            border-radius: 8px;
+            padding: 20px;
+            min-height: 500px;
+            white-space: pre-wrap;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        h1 {
+            color: #00ff00;
+            text-align: center;
+            text-shadow: 0 0 10px #00ff00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .success {
+            color: #00ff00;
+        }
+        .info {
+            color: #ffff00;
+        }
+        button {
+            background: #003300;
+            color: #00ff00;
+            border: 2px solid #00ff00;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 10px;
+            font-family: 'Courier New', monospace;
+        }
+        button:hover {
+            background: #004400;
+            box-shadow: 0 0 10px #00ff00;
+        }
+        #controls {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>PHASE 7: Grid Engine Refactor - Test Suite</h1>
+    
+    <div id="controls">
+        <button onclick="runTests()">Run All Tests</button>
+        <button onclick="testGridLevel()">Test Grid Level Loading</button>
+        <button onclick="clearConsole()">Clear Console</button>
+    </div>
+    
+    <div id="console"></div>
+
+    <!-- Import map for module resolution -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.160.0/examples/jsm/",
+            "cannon-es": "https://cdn.skypack.dev/cannon-es@0.20.0"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import * as CANNON from 'cannon-es';
+        
+        // Make THREE and CANNON available globally for our modules
+        window.THREE = THREE;
+        window.CANNON = CANNON;
+        
+        // Import our test suite
+        import { runStory71Tests, TC_7_1_GridCoordinateTransformation, TC_7_2_AssetRegistryQuery } from './tests/test-grid-system.js';
+        import { LevelManager } from './src/level/LevelManager.js';
+        
+        const consoleDiv = document.getElementById('console');
+        
+        // Override console.log to display in our custom console
+        const originalLog = console.log;
+        console.log = function(...args) {
+            originalLog.apply(console, args);
+            const message = args.map(arg => {
+                if (typeof arg === 'object') {
+                    return JSON.stringify(arg, null, 2);
+                }
+                return String(arg);
+            }).join(' ');
+            
+            // Apply color coding
+            let formattedMessage = message;
+            if (message.includes('✅') || message.includes('PASSED')) {
+                formattedMessage = `<span class="success">${message}</span>`;
+            } else if (message.includes('❌') || message.includes('FAILED')) {
+                formattedMessage = `<span class="error">${message}</span>`;
+            } else if (message.includes('===') || message.includes('---')) {
+                formattedMessage = `<span class="info">${message}</span>`;
+            }
+            
+            consoleDiv.innerHTML += formattedMessage + '\n';
+            consoleDiv.scrollTop = consoleDiv.scrollHeight;
+        };
+        
+        // Make test functions available globally
+        window.runTests = async function() {
+            clearConsole();
+            console.log('Starting PHASE 7 Test Suite...\n');
+            await runStory71Tests();
+        };
+        
+        window.testGridLevel = async function() {
+            clearConsole();
+            console.log('Testing Grid Level Loading...\n');
+            
+            // Create test environment
+            const scene = new THREE.Scene();
+            const physicsWorld = new CANNON.World();
+            const physicsManager = {
+                world: physicsWorld,
+                createFloorBody: () => new CANNON.Body({ mass: 0 }),
+                createWallBody: () => new CANNON.Body({ mass: 0 })
+            };
+            
+            const levelManager = new LevelManager(scene, physicsManager);
+            
+            // Load the grid level we created
+            try {
+                await levelManager.load('/levels/grid-level-1.json');
+                console.log('✅ Successfully loaded grid-level-1.json');
+                console.log(`Loaded ${levelManager.platforms.size} blocks`);
+                console.log(`Grid unit size: ${levelManager.gridUnitSize}`);
+                console.log(`Theme: ${levelManager.currentLevel.theme}`);
+                
+                // Display block positions
+                console.log('\nBlock positions:');
+                levelManager.platforms.forEach((mesh, key) => {
+                    const gridPos = mesh.userData.gridPosition;
+                    console.log(`  ${key}: grid[${gridPos}] -> world(${mesh.position.x}, ${mesh.position.y}, ${mesh.position.z})`);
+                });
+            } catch (error) {
+                console.log(`❌ Failed to load level: ${error.message}`);
+            }
+        };
+        
+        window.clearConsole = function() {
+            consoleDiv.innerHTML = '';
+        };
+        
+        // Auto-run tests on load
+        window.addEventListener('load', () => {
+            console.log('PHASE 7 Test Suite Ready\n');
+            console.log('Click "Run All Tests" to execute the test cases\n');
+        });
+    </script>
+</body>
+</html>
