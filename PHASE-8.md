@@ -1,4 +1,11 @@
-# PHASE-8: The First World - "The Verdant Ruins"
+This phase is a masterclass in execution, combining asset normalization, theme management, and creative level design to produce a polished, playable, and visually cohesive experience. It will serve as the definitive proof of our new engine's power and flexibility.
+
+Here is the complete, actionable plan for Phase 8.
+
+---
+---
+
+### **FILE: `PHASE-8.md`**
 
 > ### **PRIME DIRECTIVE FOR THE EXECUTING AI AGENT (Version 2.0)**
 >
@@ -28,64 +35,63 @@
 | :--- | :--- |
 | PHASE-8 | The First World - "The Verdant Ruins" |
 
-> **As a** Game Developer, **I want** to create the first complete thematic world using our new grid engine with nature-themed assets, **so that** we can showcase the power of our grid system and provide 5-10 fully playable levels with visual cohesion and engaging gameplay.
+> **As a** Game Designer, **I want** to utilize the new grid engine to build a complete, playable, and visually cohesive thematic world, **so that** we can prove the engine's capabilities and deliver the first polished content pack to our players.
 
 ---
 
 ### **2. Phase Scope & Test Case Definitions (The Contract)**
 
-*   **Requirement:** **[PROD-016]** - Thematic Worlds ([Link](./REQUIREMENTS.md#PROD-016))
+*   **Requirement:** **[PROD-017]** - Asset Normalization ([Link](./REQUIREMENTS.md#PROD-017))
     *   **Test Case ID:** `TC-8.1`
-        *   **Test Method Signature:** `ThemeManager_LoadTheme_AppliesNatureAssets()`
-        *   **Test Logic:** Load a level with theme set to "nature". Verify that when requesting a `standard_platform` block, the system loads the nature-themed asset (e.g., `Stone Platform.glb` or `Rock Medium.glb`) instead of generic placeholders.
-        *   **Required Proof of Passing:** Console logs showing theme "nature" loaded and correct asset paths resolved for block types.
+        *   **Test Method Signature:** `AssetPipeline_ProcessModel_NormalizesToGridUnit()`
+        *   **Test Logic:** Load the processed `Rock Medium.glb` model. Assert that its computed bounding box dimensions are equal to or slightly less than the configured `gridUnitSize` (e.g., 4x4x4 world units). This verifies the asset has been correctly scaled and centered to fit a `[1,1,1]` grid cell.
+        *   **Required Proof of Passing:** Console log output showing the model's final bounding box size, confirming it adheres to the standard grid unit.
+
+*   **Requirement:** **[PROD-016]** - Thematic Worlds ([Link](./REQUIREMENTS.md#PROD-016))
+    *   **Test Case ID:** `TC-8.2`
+        *   **Test Method Signature:** `LevelManager_LoadThemedLevel_UsesCorrectThematicAssets()`
+        *   **Test Logic:** Load a new level file that specifies `"theme": "nature"`. The level contains a block of type `'standard_platform'`. Assert that the `AssetRegistry`, when queried by the `LevelManager`, resolves this block to the `assets/Rock Medium.glb` model path.
+        *   **Required Proof of Passing:** Console log output from the `LevelManager` stating: "Loading block 'standard_platform' for theme 'nature'. Resolved to model: 'assets/Rock Medium.glb'".
 
 *   **Requirement:** **[ARCH-007]** - Theme Management ([Link](./REQUIREMENTS.md#ARCH-007))
-    *   **Test Case ID:** `TC-8.2`
-        *   **Test Method Signature:** `AssetRegistry_GetThemeDefinition_ReturnsNatureAssets()`
-        *   **Test Logic:** Query the AssetRegistry for theme "nature" definitions. Assert that it returns mappings for standard blocks to nature assets like `Grass Platform.glb`, `Rock Medium.glb`, `Stone Platform.glb`, etc.
-        *   **Required Proof of Passing:** Console output showing the complete nature theme mapping with correct asset paths.
-
-*   **Requirement:** **[PROD-013]** - Grid-Based Level Design ([Link](./REQUIREMENTS.md#PROD-013))
     *   **Test Case ID:** `TC-8.3`
-        *   **Test Method Signature:** `LevelLoader_LoadVerdantLevel_CreatesPlayableGrid()`
-        *   **Test Logic:** Load one of the new Verdant Ruins levels (e.g., `verdant-1.json`). Verify that all blocks are placed on grid coordinates, the level is fully playable with keys and exit, and visual assets match the nature theme.
-        *   **Required Proof of Passing:** Screenshot or log showing level loaded with proper grid alignment and nature-themed visuals.
-
-*   **Requirement:** **[NFR-003]** - Visual Identity ([Link](./REQUIREMENTS.md#NFR-003))
-    *   **Test Case ID:** `TC-8.4`
-        *   **Test Method Signature:** `Renderer_DisplayLevel_ShowsCohesiveNatureTheme()`
-        *   **Test Logic:** Load and render a Verdant Ruins level. Verify that the visual presentation is cohesive with nature elements (greens, browns, organic shapes) and the player avatar remains clearly visible against the environment.
-        *   **Required Proof of Passing:** Screenshot showing the rendered level with cohesive nature theming.
+        *   **Test Method Signature:** `ThemeManager_SwitchTheme_RendersSameLevelWithDifferentAssets()`
+        *   **Test Logic:** Load a level with the 'nature' theme. Then, programmatically create a temporary 'industrial' theme in the `AssetRegistry` that maps `'standard_platform'` to `Cube Crate.glb`. Use the `ThemeManager` to switch the active theme to 'industrial' and reload the level. Assert that the block at the same grid coordinate now uses the `Cube Crate.glb` model.
+        *   **Required Proof of Passing:** A side-by-side screenshot or two sequential screenshots clearly showing the same level layout rendered first with rock platforms, and second with crate platforms, along with console logs confirming the theme switch.
 
 ---
 
 ### **3. Implementation Plan (The Execution)**
 
-#### [ ] STORY-8.1: Nature Theme Asset Configuration
+#### [ ] STORY-8.1: Asset Pipeline & Theme Management
 
-1.  **Task:** Extend AssetRegistry with nature theme definitions.
-    *   **Instruction:** `First, read src/assets/AssetRegistry.js. Then extend it to include a comprehensive "nature" theme mapping. Map logical block types to nature assets: standard_platform -> Stone Platform.glb, decorative_rock -> Rock Medium.glb, grass_platform -> Grass Platform.glb, hazard -> Hazard Spike Trap.glb, etc. Include at least 10 different block type mappings.`
-    *   **Fulfills:** **[ARCH-007]**, **[PROD-016]**.
-    *   **Verification via Test Cases:**
-        *   **Test Case `TC-8.2`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide console output showing nature theme mappings.
-
-2.  **Task:** Create ThemeManager module.
-    *   **Instruction:** `Create src/theme/ThemeManager.js. This module should work with AssetRegistry to apply theme-specific asset mappings. It must have methods to setTheme(themeName), getCurrentTheme(), and getThemedAsset(blockType). When a theme is set, it should configure AssetRegistry to return theme-appropriate assets.`
+1.  **Task:** Implement the `ThemeManager`.
+    *   **Instruction:** `First, read and internalize src/assets/AssetRegistry.js and src/level/LevelManager.js. Create a new file at src/themes/ThemeManager.js. This module will be responsible for setting the active theme and providing it to the LevelManager. It should be a simple state manager for now, with methods like setTheme(themeName) and getActiveTheme().`
     *   **Fulfills:** **[ARCH-007]**.
+    *   **Verification via Test Cases:** N/A (Internal setup for TC-8.3).
+
+2.  **Task:** Normalize "Verdant Ruins" assets.
+    *   **Instruction:** `This is a preparatory task. You will need to process the following assets from the assets/ directory to ensure they are centered and scaled to fit a standard [1,1,1] grid unit: Rock Medium.glb, Grass Platform.glb, Cube Bricks.glb, Stone Platform.glb. To do this, you must return to your orchestrator and ask the engineer to perform the 3D model normalization using an external tool like Blender.`
+    *   **Fulfills:** **[PROD-017]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-8.1`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide console logs showing theme application.
+            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code that loads a normalized model and measures its bounding box.
+            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the console logs confirming the bounding box size matches the `gridUnitSize`.
+
+3.  **Task:** Populate the `AssetRegistry` with the "Verdant Ruins" theme.
+    *   **Instruction:** `Modify src/assets/AssetRegistry.js. Create a new theme entry for "nature". Within this theme, define the mappings for logical block types to their normalized asset paths. For example: 'standard_platform' -> 'assets/Rock Medium.glb', 'grass_platform' -> 'assets/Grass Platform.glb', 'brick_wall' -> 'assets/Cube Bricks.glb', and 'decorative_bush' -> 'assets/Bush.glb'.`
+    *   **Fulfills:** **[ARCH-004]**, **[PROD-016]**.
+    *   **Verification via Test Cases:**
+        *   **Test Case `TC-8.2`:**
+            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide test code that loads a nature-themed level and logs the model resolution.
+            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the console logs confirming the correct model was selected based on the theme.
 
 > ### **Story Completion: STORY-8.1**
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(world): Add nature theme configuration and ThemeManager"'.` **Evidence:** Provide the full commit hash.
+>     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(engine): Implement ThemeManager and normalize nature assets"'.` **Evidence:** Provide the full commit hash.
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(world): Nature Theme Configuration" --body "This PR adds nature theme asset mappings and ThemeManager for The Verdant Ruins world. Fulfills Story 8.1." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(engine): Implement Theme Management and Nature Assets" --body "This PR introduces the ThemeManager, adds normalized assets for the 'nature' theme to the AssetRegistry, and fulfills asset pipeline requirements. Fulfills Story 8.1." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
 > 3.  **CRITICAL HAND-OFF TO QA:**
 >     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 8.1 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
 > 4.  **Merge Pull Request:**
@@ -93,35 +99,33 @@
 > 5.  **Finalize Story:**
 >     *   **Instruction:** Update this story's main checkbox from `[ ]` to `[x]`.
 
-#### [ ] STORY-8.2: The Verdant Ruins Levels
+#### [ ] STORY-8.2: Build "The Verdant Ruins" Level Pack
 
-1.  **Task:** Create the first set of grid-based nature levels.
-    *   **Instruction:** `Create 5 level files in levels/verdant/ directory: verdant-1.json through verdant-5.json. Each level must use the grid system with nature theme. Start simple (verdant-1: basic platforms and 2 keys) and increase complexity. Include varied layouts: vertical climbing, horizontal platforming, spiral paths. Use nature-appropriate blocks and ensure proper grid alignment.`
-    *   **Fulfills:** **[PROD-013]**, **[PROD-016]**.
+1.  **Task:** Design and implement the first three levels of "The Verdant Ruins".
+    *   **Instruction:** `Create three new level files in the levels/ directory: verdant-ruins-01.json, verdant-ruins-02.json, and verdant-ruins-03.json. These levels MUST specify "theme": "nature" and use the newly registered nature-themed blocks (e.g., 'standard_platform', 'grass_platform'). Design them to be playable and to showcase the visual appeal of the new assets.`
+    *   **Fulfills:** **[PROD-016]**.
+    *   **Verification via Test Cases:** N/A (Creative implementation, verified by playable result).
+
+2.  **Task:** Integrate non-collidable decorative assets.
+    *   **Instruction:** `Modify the LevelManager to support a new category of level entity: "decorations". These entities (like Bush.glb or Tree.glb) should be loaded from the AssetRegistry but MUST NOT have a physics body created for them. Add decorative assets to the three new "Verdant Ruins" levels to enhance their visual richness.`
+    *   **Fulfills:** **[PROD-016]**.
+    *   **Verification via Test Cases:**
+        *   **Manual Test:** Load a level and visually confirm that decorative bushes and trees are present and that the player can roll right through them without collision. Provide a screenshot as evidence.
+
+3.  **Task:** Implement and verify the Theme Switching capability.
+    *   **Instruction:** `This task is for verification. Read src/themes/ThemeManager.js and src/level/LevelManager.js. Create a temporary test harness or modify a test file to programmatically switch the active theme using the ThemeManager and reload the same level file. This will prove the core value of our decoupled architecture.`
+    *   **Fulfills:** **[ARCH-007]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-8.3`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide logs showing level loaded successfully.
-
-2.  **Task:** Create advanced Verdant Ruins levels.
-    *   **Instruction:** `Create 5 more levels (verdant-6.json through verdant-10.json) with increased difficulty. Include: multi-tier platforms, longer jump sequences, strategic key placement requiring backtracking, hazard placement (using spike traps), and creative use of the 3D grid space. Each level should take 2-5 minutes to complete.`
-    *   **Fulfills:** **[PROD-011]**, **[PROD-004]**.
-    *   **Verification via Test Cases:**
-        *   **Test Case `TC-8.4`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide screenshot of rendered level.
-
-3.  **Task:** Create level progression configuration.
-    *   **Instruction:** `Create levels/worlds.json that defines world progression. Include "verdant_ruins" world with metadata: name, description, theme, level_order (verdant-1 through verdant-10), and difficulty progression. This will allow the game to present levels in proper sequence.`
-    *   **Fulfills:** **[USER-003]**, **[PROD-016]**.
-    *   **Verification via Test Cases:** N/A (Configuration task).
+            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code for switching themes and reloading.
+            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the side-by-side screenshots showing the same level with different thematic assets.
 
 > ### **Story Completion: STORY-8.2**
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(world): Add 10 Verdant Ruins levels with progression"'.` **Evidence:** Provide the full commit hash.
+>     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(content): Build first level pack for Verdant Ruins"'.` **Evidence:** Provide the full commit hash.
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(world): The Verdant Ruins Level Pack" --body "This PR adds 10 fully playable grid-based levels for The Verdant Ruins world with nature theming and difficulty progression. Fulfills Story 8.2." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(content): Build The Verdant Ruins Level Pack" --body "This PR delivers the first three playable levels of the 'nature' theme, introduces decorative assets, and verifies theme-switching functionality. Fulfills Story 8.2." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
 > 3.  **CRITICAL HAND-OFF TO QA:**
 >     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 8.2 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
 > 4.  **Merge Pull Request:**
@@ -136,6 +140,6 @@
 #### Final Acceptance Gate
 
 *   [ ] **Final Full Regression Test Passed:**
-    *   **Instruction:** `Verify that all stories (8.1, 8.2) are marked [x], indicating they have passed QA and been merged. Test that all 10 Verdant Ruins levels are fully playable with proper theming. Run the new theme tests to ensure the system works correctly.`
-    *   **Evidence:** Provide a final summary confirming both stories are merged and levels are playable.
+    *   **Instruction:** `Verify that all stories (8.1, 8.2) are marked [x]. Load and play through each of the three "Verdant Ruins" levels. Confirm they are playable, visually cohesive, and performant. Run the full E2E test suite ('npm test') to ensure no regressions.`
+    *   **Evidence:** Provide a final summary statement confirming both stories are merged, the new levels are playable, and the automated test suite passes.
 *   **Final Instruction:** Once the final verification is complete, change `[ ] PHASE-8` to `[x] PHASE-8`.
