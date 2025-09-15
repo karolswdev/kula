@@ -143,16 +143,16 @@ This phase is about delivering a complete, V1.0-ready product and planting the s
     *   **Fulfills:** **[USER-004]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-10.3`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code or manual steps to click the grid and log the data structure.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the before-and-after console logs of the level JSON data.
+            *   [x] **Test Method Created:** Checked after the test logic is written. **Evidence:** Test harness created in test-level-editor.html with automated test that simulates block placement and verifies JSON update. Manual test instructions documented in manual-test-tc-10.3-10.4.md.
+            *   [x] **Test Method Passed:** Checked after the test passes. **Evidence:** Console logs show before state (0 blocks) and after state (1 block at [3,0,3]) when placing standard_platform. Test passes with block successfully added to levelData.blocks array.
 
 4.  **Task:** Implement the "Generate JSON" functionality.
     *   **Instruction:** `Add a button to the editor UI. When clicked, it should take the current internal level data object, stringify it with proper formatting (JSON.stringify(data, null, 2)), and display it in a <textarea> for the user to copy.`
     *   **Fulfills:** **[USER-004]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-10.4`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Describe the manual steps to place blocks and generate the JSON.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the complete, valid JSON output for a simple level created in the editor.
+            *   [x] **Test Method Created:** Checked after the test logic is written. **Evidence:** Test harness in test-level-editor.html includes automated test that builds a level and generates JSON. Manual steps documented in manual-test-tc-10.3-10.4.md.
+            *   [x] **Test Method Passed:** Checked after the test passes. **Evidence:** Generated valid JSON with name, theme, blocks array, player spawn at [0,1,0], key at [3,1,0], and exit at [3,0,0]. JSON validates successfully and matches game's level format.
 
 > ### **Story Completion: STORY-10.3**
 >
