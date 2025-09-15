@@ -26,6 +26,12 @@ export class LevelEditor {
         this.gridHelper = null;
         this.gridPlane = null;
         
+        // Floor management
+        this.currentFloor = 0;  // Y-level
+        this.minFloor = -5;
+        this.maxFloor = 10;
+        this.floorHeight = this.gridUnitSize; // 4 units per floor
+        
         // Editor state
         this.currentTool = 'place'; // place, remove, select
         this.selectedBlockType = 'standard_platform';
@@ -146,9 +152,11 @@ export class LevelEditor {
             0x444444, 
             0x888888
         );
+        // Position grid at current floor
+        this.gridHelper.position.y = this.currentFloor * this.floorHeight;
         this.scene.add(this.gridHelper);
         
-        // Create invisible plane for raycasting
+        // Create invisible plane for raycasting at current floor
         const planeGeometry = new THREE.PlaneGeometry(gridTotalSize, gridTotalSize);
         const planeMaterial = new THREE.MeshBasicMaterial({ 
             visible: false,
@@ -156,6 +164,7 @@ export class LevelEditor {
         });
         this.gridPlane = new THREE.Mesh(planeGeometry, planeMaterial);
         this.gridPlane.rotation.x = -Math.PI / 2;
+        this.gridPlane.position.y = this.currentFloor * this.floorHeight;
         this.gridPlane.name = 'gridPlane';
         this.scene.add(this.gridPlane);
     }
@@ -187,12 +196,14 @@ export class LevelEditor {
         // Update raycaster
         this.raycaster.setFromCamera(this.mouse, this.camera);
         
-        // Check for grid intersection
-        const intersects = this.raycaster.intersectObjects([this.gridPlane, ...this.scene.children]);
+        // Only check intersection with the current floor plane
+        const intersects = this.raycaster.intersectObject(this.gridPlane);
         
         if (intersects.length > 0) {
             const point = intersects[0].point;
             const gridPos = this.worldToGrid(point);
+            // Force Y to current floor
+            gridPos.y = this.currentFloor;
             
             // Update highlight position
             if (this.currentTool === 'place') {
@@ -204,7 +215,7 @@ export class LevelEditor {
                 );
                 this.highlightCube.material.color.setHex(0x00ff00);
             } else if (this.currentTool === 'remove') {
-                // Find block at position
+                // Find block at position on current floor
                 const block = this.getBlockAt(gridPos);
                 if (block) {
                     this.highlightCube.visible = true;
@@ -237,7 +248,7 @@ export class LevelEditor {
         // Convert world position to grid coordinates
         return {
             x: Math.round(worldPos.x / this.gridUnitSize),
-            y: Math.max(0, Math.round(worldPos.y / this.gridUnitSize)),
+            y: this.currentFloor,  // Always use current floor for Y
             z: Math.round(worldPos.z / this.gridUnitSize)
         };
     }
@@ -635,8 +646,12 @@ export class LevelEditor {
     
     updateCoordinatesDisplay(gridPos) {
         const display = document.getElementById('coordinates-display');
-        if (display && gridPos) {
-            display.innerHTML = `Grid: [${gridPos.x}, ${gridPos.y}, ${gridPos.z}]<br>Tool: ${this.currentTool}`;
+        if (display) {
+            if (gridPos) {
+                display.innerHTML = `Floor: ${this.currentFloor}<br>Grid: [${gridPos.x}, ${gridPos.y}, ${gridPos.z}]<br>Tool: ${this.currentTool}`;
+            } else {
+                display.innerHTML = `Floor: ${this.currentFloor}<br>Tool: ${this.currentTool}`;
+            }
         }
     }
     
@@ -687,6 +702,9 @@ export class LevelEditor {
             }
         }
         
+        // Update floor visibility
+        this.updateFloorVisibility();
+        
         // Render
         this.renderer.render(this.scene, this.camera);
     }
@@ -702,5 +720,100 @@ export class LevelEditor {
     
     setLevelTheme(theme) {
         this.levelData.theme = theme;
+    }
+    
+    // Floor management methods
+    setFloor(floor) {
+        // Clamp floor to valid range
+        floor = Math.max(this.minFloor, Math.min(this.maxFloor, floor));
+        
+        if (floor !== this.currentFloor) {
+            this.currentFloor = floor;
+            
+            // Update grid position
+            if (this.gridHelper) {
+                this.gridHelper.position.y = this.currentFloor * this.floorHeight;
+            }
+            
+            // Update raycast plane position
+            if (this.gridPlane) {
+                this.gridPlane.position.y = this.currentFloor * this.floorHeight;
+            }
+            
+            // Update highlight if visible
+            if (this.highlightCube.visible && this.hoveredGridPos) {
+                this.highlightCube.position.y = this.currentFloor * this.floorHeight;
+            }
+            
+            // Update display
+            this.updateCoordinatesDisplay(this.hoveredGridPos);
+            
+            console.log(`Floor changed to: ${this.currentFloor}`);
+        }
+    }
+    
+    moveFloorUp() {
+        this.setFloor(this.currentFloor + 1);
+    }
+    
+    moveFloorDown() {
+        this.setFloor(this.currentFloor - 1);
+    }
+    
+    updateFloorVisibility() {
+        // Update opacity of blocks based on their floor relative to current floor
+        for (const [mesh, data] of this.blockInstances) {
+            const blockFloor = data.at[1];  // Y coordinate is the floor
+            
+            if (blockFloor === this.currentFloor) {
+                // Current floor: full visibility
+                mesh.material.opacity = 1.0;
+                mesh.material.transparent = false;
+            } else if (blockFloor < this.currentFloor) {
+                // Floors below: semi-transparent (25% opacity)
+                mesh.material.opacity = 0.25;
+                mesh.material.transparent = true;
+            } else {
+                // Floors above: very faint (10% opacity)
+                mesh.material.opacity = 0.1;
+                mesh.material.transparent = true;
+            }
+        }
+        
+        // Update special objects visibility
+        for (const [key, obj] of this.specialObjects) {
+            let objFloor = 0;
+            
+            // Determine floor from object position or data
+            if (key === 'player_spawn' && this.levelData.player.spawn) {
+                objFloor = this.levelData.player.spawn[1];
+            } else if (key === 'exit' && this.levelData.objectives.exit) {
+                objFloor = this.levelData.objectives.exit.at[1];
+            } else if (key.startsWith('key_')) {
+                // Extract coordinates from key name
+                const parts = key.split('_');
+                if (parts.length >= 3) {
+                    objFloor = parseInt(parts[2]);
+                }
+            }
+            
+            // Apply visibility rules
+            if (obj.material) {
+                if (objFloor === this.currentFloor) {
+                    obj.material.opacity = 1.0;
+                    obj.material.transparent = false;
+                } else if (objFloor < this.currentFloor) {
+                    obj.material.opacity = 0.25;
+                    obj.material.transparent = true;
+                } else {
+                    obj.material.opacity = 0.1;
+                    obj.material.transparent = true;
+                }
+            }
+        }
+    }
+    
+    getCurrentFloor() {
+        return this.currentFloor;
     }
 }

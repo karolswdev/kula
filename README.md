@@ -309,6 +309,113 @@ Levels are defined in JSON for easy creation and modification:
 
 ---
 
+## 🎨 Level Editor
+
+### Accessing the Editor
+
+The Kula Browser includes a powerful in-browser level editor that allows you to create custom levels with an intuitive 3D interface.
+
+**To access the editor:**
+1. Open `editor.html` in your browser
+2. Or navigate to `http://localhost:8080/editor.html` when running the dev server
+
+### Floor-Based Editing System
+
+The editor uses a **floor-based editing system** that makes it easy to work in 3D space:
+
+- **Current Floor Lock**: You can only place/edit blocks on the currently selected floor
+- **Visual Hierarchy**: 
+  - Current floor: Full visibility with grid
+  - Floors below: Semi-transparent (25% opacity)
+  - Floors above: Very faint (10% opacity)
+- **Precise Placement**: No more guessing which grid cell you're clicking on!
+
+### Editor Controls
+
+#### Floor Navigation
+
+| Action | Controls | Description |
+|--------|----------|-------------|
+| **Move Up One Floor** | `PageUp` or `Shift+Q` | Navigate to the floor above |
+| **Move Down One Floor** | `PageDown` or `Shift+E` | Navigate to the floor below |
+| **Jump to Floor** | `Alt+0` to `Alt+9` | Instantly jump to floor 0-9 |
+| **Direct Input** | Floor input field | Type exact floor number (-5 to 10) |
+| **Visual Buttons** | ▲/▼ buttons | Click to move up/down floors |
+
+#### Tool Selection
+
+| Tool | Shortcut | Description |
+|------|----------|-------------|
+| **Place** | `Q` | Place blocks at cursor position |
+| **Remove** | `W` | Remove blocks at cursor position |
+| **Select** | `E` | Select blocks for properties |
+
+#### Block Selection
+
+| Action | Shortcut | Description |
+|--------|----------|-------------|
+| **Quick Select** | `1-9` | Select block type from palette |
+| **Mouse Select** | Click palette | Choose from visual block palette |
+
+#### Camera Controls
+
+| Action | Control | Description |
+|--------|---------|-------------|
+| **Rotate** | Left Mouse Drag | Orbit camera around focus point |
+| **Zoom** | Mouse Wheel | Zoom in/out |
+| **Pan** | Right Mouse Drag | Move camera laterally |
+
+### Creating a Level
+
+1. **Start with Floor 0**: The editor starts at floor 0 by default
+2. **Place Platform Blocks**: Select a platform type and click to place
+3. **Add Player Spawn**: Place the green sphere where the player starts
+4. **Add Keys**: Place golden cones that the player must collect
+5. **Add Exit**: Place the purple ring that ends the level
+6. **Add Hazards**: Optionally add spikes and other obstacles
+7. **Test Different Floors**: Use floor navigation to build vertically
+8. **Generate JSON**: Click "Generate JSON" to export your level
+
+### Level Requirements
+
+For a valid, playable level you must include:
+
+- ✅ **Player Spawn Point** (green sphere)
+- ✅ **At least one Key** (golden cone)
+- ✅ **Exit Portal** (purple ring)
+- ✅ **Platform blocks** for the player to walk on
+
+### Tips for Effective Level Creation
+
+1. **Start Simple**: Begin with a flat layout on floor 0
+2. **Build Upward**: Use floors 1-3 for vertical challenges
+3. **Test Accessibility**: Ensure all areas are reachable
+4. **Use Visual Cues**: Place decorations to guide players
+5. **Mind the Gaps**: Remember the ball can jump ~1.5 grid units
+6. **Preview Other Floors**: Check alignment between floors
+7. **Save Often**: Generate JSON periodically to save your work
+
+### Importing/Exporting Levels
+
+#### Export Level
+1. Click "Generate JSON" button
+2. Copy the JSON from the text area
+3. Save to a `.json` file in `levels/` directory
+
+#### Import Level
+1. Click "Load JSON" button
+2. Select your `.json` level file
+3. The level will load in the editor for editing
+
+### Advanced Features
+
+- **Grid Size Adjustment**: Change the grid size for larger/smaller levels
+- **Theme Selection**: Choose between different visual themes
+- **Block Behaviors**: Some blocks have special behaviors (moving platforms, etc.)
+- **Multi-Floor Puzzles**: Create complex vertical challenges using gravity mechanics
+
+---
+
 ## 🤝 Contributing
 
 We welcome contributions from the community! Here's how you can help:
@@ -358,7 +465,7 @@ We welcome contributions from the community! Here's how you can help:
 - 🔄 Level restart and checkpoint system
 
 ### Version 2.0 (Future)
-- 📝 In-browser level editor
+- ✅ In-browser level editor (Implemented!)
 - 🌍 Community level sharing
 - 🏆 Achievement system
 - 🎮 Gamepad support

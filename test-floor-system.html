@@ -1,0 +1,329 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Floor System Test - STORY 10.4</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .test-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: rgba(0,0,0,0.3);
+            padding: 30px;
+            border-radius: 15px;
+        }
+        
+        h1 {
+            color: #FFD700;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.5);
+        }
+        
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 10px;
+        }
+        
+        .test-result {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            font-family: monospace;
+        }
+        
+        .pass {
+            background: rgba(76, 205, 196, 0.3);
+            border: 2px solid #4ECDC4;
+        }
+        
+        .fail {
+            background: rgba(244, 67, 54, 0.3);
+            border: 2px solid #F44336;
+        }
+        
+        button {
+            background: white;
+            color: #667eea;
+            border: none;
+            padding: 12px 30px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 25px;
+            cursor: pointer;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+        }
+        
+        iframe {
+            width: 100%;
+            height: 600px;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        .instructions {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-left: 4px solid #FFD700;
+            margin: 15px 0;
+        }
+        
+        code {
+            background: rgba(0,0,0,0.3);
+            padding: 2px 6px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="test-container">
+        <h1>🎮 Floor System Test Suite - STORY 10.4</h1>
+        
+        <div class="test-section">
+            <h2>📋 Test Overview</h2>
+            <p>This test suite verifies the floor-based editing system implementation for the Kula Browser level editor.</p>
+            <p><strong>Requirements:</strong> Enhanced usability for USER-004 (Grid-Based Placement)</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>🔧 Automated Tests</h2>
+            <button onclick="runAllTests()">Run All Tests</button>
+            <button onclick="clearResults()">Clear Results</button>
+            
+            <div id="test-results"></div>
+        </div>
+        
+        <div class="test-section">
+            <h2>👁️ Visual Test - Editor with Floor System</h2>
+            <iframe id="editor-frame" src="editor.html"></iframe>
+            
+            <div class="instructions">
+                <h3>Manual Verification Steps:</h3>
+                <ol>
+                    <li>✅ Verify floor indicator shows "Floor: 0" in top-right corner</li>
+                    <li>✅ Click the ▲ button or press <code>PageUp</code> to move up one floor</li>
+                    <li>✅ Click the ▼ button or press <code>PageDown</code> to move down one floor</li>
+                    <li>✅ Press <code>Alt+5</code> to jump directly to floor 5</li>
+                    <li>✅ Place blocks on different floors and verify they only appear on current floor's grid</li>
+                    <li>✅ Switch floors and observe opacity changes (current=100%, below=25%, above=10%)</li>
+                    <li>✅ Verify grid helper moves with floor changes</li>
+                    <li>✅ Verify coordinates display shows current floor</li>
+                </ol>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>📊 Test Results Summary</h2>
+            <div id="summary">
+                <p>Tests not yet run. Click "Run All Tests" to begin.</p>
+            </div>
+        </div>
+    </div>
+    
+    <script type="module">
+        window.runAllTests = async function() {
+            const resultsDiv = document.getElementById('test-results');
+            const summaryDiv = document.getElementById('summary');
+            resultsDiv.innerHTML = '<h3>Running tests...</h3>';
+            
+            let passCount = 0;
+            let failCount = 0;
+            const results = [];
+            
+            // Test 1: Floor navigation controls exist
+            try {
+                const iframe = document.getElementById('editor-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                
+                const floorUp = iframeDoc.getElementById('floor-up');
+                const floorDown = iframeDoc.getElementById('floor-down');
+                const floorDisplay = iframeDoc.getElementById('floor-display');
+                const floorInput = iframeDoc.getElementById('floor-input');
+                
+                if (floorUp && floorDown && floorDisplay && floorInput) {
+                    results.push({ test: 'Floor Navigation UI Elements', status: 'PASS', message: 'All floor controls found' });
+                    passCount++;
+                } else {
+                    results.push({ test: 'Floor Navigation UI Elements', status: 'FAIL', message: 'Missing floor controls' });
+                    failCount++;
+                }
+            } catch (e) {
+                results.push({ test: 'Floor Navigation UI Elements', status: 'FAIL', message: e.message });
+                failCount++;
+            }
+            
+            // Test 2: Floor display shows current floor
+            try {
+                const iframe = document.getElementById('editor-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const floorDisplay = iframeDoc.getElementById('floor-display');
+                
+                if (floorDisplay && floorDisplay.textContent.includes('Floor:')) {
+                    results.push({ test: 'Floor Display', status: 'PASS', message: `Display shows: ${floorDisplay.textContent}` });
+                    passCount++;
+                } else {
+                    results.push({ test: 'Floor Display', status: 'FAIL', message: 'Floor display not showing correctly' });
+                    failCount++;
+                }
+            } catch (e) {
+                results.push({ test: 'Floor Display', status: 'FAIL', message: e.message });
+                failCount++;
+            }
+            
+            // Test 3: Coordinates display includes floor
+            try {
+                const iframe = document.getElementById('editor-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const coordDisplay = iframeDoc.getElementById('coordinates-display');
+                
+                if (coordDisplay && coordDisplay.innerHTML.includes('Floor:')) {
+                    results.push({ test: 'Coordinates Display with Floor', status: 'PASS', message: 'Coordinates display includes floor info' });
+                    passCount++;
+                } else {
+                    results.push({ test: 'Coordinates Display with Floor', status: 'FAIL', message: 'Coordinates display missing floor info' });
+                    failCount++;
+                }
+            } catch (e) {
+                results.push({ test: 'Coordinates Display with Floor', status: 'FAIL', message: e.message });
+                failCount++;
+            }
+            
+            // Test 4: Editor has floor methods
+            try {
+                const iframe = document.getElementById('editor-frame');
+                const editor = iframe.contentWindow.editor;
+                
+                if (editor && 
+                    typeof editor.setFloor === 'function' &&
+                    typeof editor.moveFloorUp === 'function' &&
+                    typeof editor.moveFloorDown === 'function' &&
+                    typeof editor.getCurrentFloor === 'function') {
+                    results.push({ test: 'Floor Management Methods', status: 'PASS', message: 'All floor methods implemented' });
+                    passCount++;
+                } else {
+                    results.push({ test: 'Floor Management Methods', status: 'FAIL', message: 'Missing floor management methods' });
+                    failCount++;
+                }
+            } catch (e) {
+                results.push({ test: 'Floor Management Methods', status: 'FAIL', message: e.message });
+                failCount++;
+            }
+            
+            // Test 5: Floor changes work
+            try {
+                const iframe = document.getElementById('editor-frame');
+                const editor = iframe.contentWindow.editor;
+                
+                if (editor) {
+                    const initialFloor = editor.getCurrentFloor();
+                    editor.moveFloorUp();
+                    const afterUp = editor.getCurrentFloor();
+                    editor.moveFloorDown();
+                    editor.moveFloorDown();
+                    const afterDown = editor.getCurrentFloor();
+                    
+                    if (afterUp === initialFloor + 1 && afterDown === initialFloor - 1) {
+                        results.push({ test: 'Floor Navigation Functions', status: 'PASS', message: 'Floor navigation works correctly' });
+                        passCount++;
+                    } else {
+                        results.push({ test: 'Floor Navigation Functions', status: 'FAIL', message: `Expected up/down movement, got: ${initialFloor} -> ${afterUp} -> ${afterDown}` });
+                        failCount++;
+                    }
+                    
+                    // Reset to floor 0
+                    editor.setFloor(0);
+                }
+            } catch (e) {
+                results.push({ test: 'Floor Navigation Functions', status: 'FAIL', message: e.message });
+                failCount++;
+            }
+            
+            // Test 6: Keyboard shortcuts info exists
+            try {
+                const iframe = document.getElementById('editor-frame');
+                const iframeDoc = iframe.contentDocument || iframe.contentWindow.document;
+                const panelSections = iframeDoc.querySelectorAll('.panel-section');
+                let shortcutsFound = false;
+                
+                for (const section of panelSections) {
+                    if (section.textContent.includes('PageUp') && section.textContent.includes('Floor')) {
+                        shortcutsFound = true;
+                        break;
+                    }
+                }
+                
+                if (shortcutsFound) {
+                    results.push({ test: 'Keyboard Shortcuts Documentation', status: 'PASS', message: 'Floor shortcuts documented in UI' });
+                    passCount++;
+                } else {
+                    results.push({ test: 'Keyboard Shortcuts Documentation', status: 'FAIL', message: 'Floor shortcuts not documented' });
+                    failCount++;
+                }
+            } catch (e) {
+                results.push({ test: 'Keyboard Shortcuts Documentation', status: 'FAIL', message: e.message });
+                failCount++;
+            }
+            
+            // Display results
+            resultsDiv.innerHTML = '<h3>Test Results:</h3>';
+            results.forEach(result => {
+                const div = document.createElement('div');
+                div.className = `test-result ${result.status === 'PASS' ? 'pass' : 'fail'}`;
+                div.innerHTML = `<strong>${result.test}:</strong> ${result.status}<br><small>${result.message}</small>`;
+                resultsDiv.appendChild(div);
+            });
+            
+            // Update summary
+            const totalTests = passCount + failCount;
+            const passRate = totalTests > 0 ? Math.round((passCount / totalTests) * 100) : 0;
+            summaryDiv.innerHTML = `
+                <h3>Summary:</h3>
+                <p>✅ Passed: ${passCount}</p>
+                <p>❌ Failed: ${failCount}</p>
+                <p>📊 Pass Rate: ${passRate}%</p>
+                <p><strong>Overall: ${failCount === 0 ? '🎉 ALL TESTS PASSED!' : '⚠️ Some tests failed'}</strong></p>
+            `;
+            
+            // Log to console for evidence
+            console.log('=== STORY 10.4 FLOOR SYSTEM TEST RESULTS ===');
+            console.log('Tests Run:', totalTests);
+            console.log('Passed:', passCount);
+            console.log('Failed:', failCount);
+            console.log('Pass Rate:', passRate + '%');
+            results.forEach(r => {
+                console.log(`${r.test}: ${r.status} - ${r.message}`);
+            });
+            console.log('=== END TEST RESULTS ===');
+        };
+        
+        window.clearResults = function() {
+            document.getElementById('test-results').innerHTML = '';
+            document.getElementById('summary').innerHTML = '<p>Tests not yet run. Click "Run All Tests" to begin.</p>';
+        };
+        
+        // Wait for iframe to load then run tests automatically
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                console.log('Floor System Test Page Loaded - Ready for testing');
+                // Auto-run tests after a delay to ensure editor is fully loaded
+                setTimeout(runAllTests, 2000);
+            }, 1000);
+        });
+    </script>
+</body>
+</html>

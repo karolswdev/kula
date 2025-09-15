@@ -49,6 +49,12 @@ export class EditorUI {
         // Setup special object buttons
         this.setupSpecialObjects();
         
+        // Setup floor navigation
+        this.setupFloorNavigation();
+        
+        // Setup keyboard shortcuts including floor navigation
+        this.setupKeyboardShortcuts();
+        
         console.log('EditorUI initialized');
     }
     
@@ -324,28 +330,118 @@ export class EditorUI {
         this.jsonOutput.style.display = 'none';
     }
     
+    setupFloorNavigation() {
+        // Get floor navigation elements
+        const floorUpButton = document.getElementById('floor-up');
+        const floorDownButton = document.getElementById('floor-down');
+        const floorDisplay = document.getElementById('floor-display');
+        const floorInput = document.getElementById('floor-input');
+        
+        // Setup floor up button
+        if (floorUpButton) {
+            floorUpButton.addEventListener('click', () => {
+                this.editor.moveFloorUp();
+                this.updateFloorDisplay();
+            });
+        }
+        
+        // Setup floor down button
+        if (floorDownButton) {
+            floorDownButton.addEventListener('click', () => {
+                this.editor.moveFloorDown();
+                this.updateFloorDisplay();
+            });
+        }
+        
+        // Setup floor input for direct floor selection
+        if (floorInput) {
+            floorInput.addEventListener('change', (e) => {
+                const floor = parseInt(e.target.value);
+                if (!isNaN(floor)) {
+                    this.editor.setFloor(floor);
+                    this.updateFloorDisplay();
+                }
+            });
+        }
+        
+        // Initial floor display update
+        this.updateFloorDisplay();
+    }
+    
+    updateFloorDisplay() {
+        const floorDisplay = document.getElementById('floor-display');
+        const floorInput = document.getElementById('floor-input');
+        
+        if (floorDisplay) {
+            floorDisplay.textContent = `Floor: ${this.editor.getCurrentFloor()}`;
+        }
+        
+        if (floorInput) {
+            floorInput.value = this.editor.getCurrentFloor();
+        }
+        
+        // Update coordinates display to show current floor
+        this.editor.updateCoordinatesDisplay(null);
+    }
+    
     // Keyboard shortcuts
     setupKeyboardShortcuts() {
         document.addEventListener('keydown', (e) => {
-            // Number keys for quick block selection
-            if (e.key >= '1' && e.key <= '9') {
-                const index = parseInt(e.key) - 1;
-                const buttons = document.querySelectorAll('#block-palette .block-button');
-                if (buttons[index]) {
-                    buttons[index].click();
+            // Prevent default for our shortcuts
+            const preventDefault = ['q', 'e', 'pageup', 'pagedown'];
+            if (preventDefault.includes(e.key.toLowerCase())) {
+                e.preventDefault();
+            }
+            
+            // Number keys for quick block selection or floor jumping
+            if (e.key >= '0' && e.key <= '9' && !e.ctrlKey && !e.shiftKey) {
+                if (e.altKey) {
+                    // Alt + Number: Jump to floor
+                    const floor = parseInt(e.key);
+                    this.editor.setFloor(floor);
+                    this.updateFloorDisplay();
+                } else {
+                    // Number alone: Select block
+                    const index = parseInt(e.key) - 1;
+                    const buttons = document.querySelectorAll('#block-palette .block-button');
+                    if (index >= 0 && buttons[index]) {
+                        buttons[index].click();
+                    }
                 }
             }
             
-            // Tool shortcuts
+            // Tool and floor shortcuts
             switch(e.key.toLowerCase()) {
                 case 'q':
-                    this.selectTool('place');
+                    if (e.shiftKey) {
+                        // Shift+Q: Floor up
+                        this.editor.moveFloorUp();
+                        this.updateFloorDisplay();
+                    } else {
+                        // Q: Place tool
+                        this.selectTool('place');
+                    }
+                    break;
+                case 'e':
+                    if (e.shiftKey) {
+                        // Shift+E: Floor down
+                        this.editor.moveFloorDown();
+                        this.updateFloorDisplay();
+                    } else {
+                        // E: Select tool
+                        this.selectTool('select');
+                    }
                     break;
                 case 'w':
                     this.selectTool('remove');
                     break;
-                case 'e':
-                    this.selectTool('select');
+                case 'pageup':
+                    this.editor.moveFloorUp();
+                    this.updateFloorDisplay();
+                    break;
+                case 'pagedown':
+                    this.editor.moveFloorDown();
+                    this.updateFloorDisplay();
                     break;
                 case 'delete':
                 case 'backspace':
