@@ -73,8 +73,8 @@ export class Game {
         // Initialize game systems first - Requirement: ARCH-001
         this.initializeSystems();
         
-        // Load the first level - Requirement: ARCH-002
-        this.loadLevel('/levels/level-1.json');
+        // Don't load a level automatically - let GameFlowManager handle it
+        // this.loadLevel('/levels/level-1.json');
         
         // Handle window resize
         window.addEventListener('resize', () => this.handleResize());
