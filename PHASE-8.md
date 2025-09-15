@@ -75,25 +75,25 @@ Here is the complete, actionable plan for Phase 8.
     *   **Fulfills:** **[PROD-017]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-8.1`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide the test code that loads a normalized model and measures its bounding box.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the console logs confirming the bounding box size matches the `gridUnitSize`.
+            *   [x] **Test Method Created:** Checked after the test logic is written. **Evidence:** Test code in `test-model-normalization.html` loads GLB models and measures bounding boxes using Three.js Box3.
+            *   [x] **Test Method Passed:** Checked after the test passes. **Evidence:** Test results in `evidence/phase-8/story-8.1/tc-8.1-results.json` show all models normalized to 4x4x4 units.
 
 3.  **Task:** Populate the `AssetRegistry` with the "Verdant Ruins" theme.
     *   **Instruction:** `Modify src/assets/AssetRegistry.js. Create a new theme entry for "nature". Within this theme, define the mappings for logical block types to their normalized asset paths. For example: 'standard_platform' -> 'assets/Rock Medium.glb', 'grass_platform' -> 'assets/Grass Platform.glb', 'brick_wall' -> 'assets/Cube Bricks.glb', and 'decorative_bush' -> 'assets/Bush.glb'.`
     *   **Fulfills:** **[ARCH-004]**, **[PROD-016]**.
     *   **Verification via Test Cases:**
         *   **Test Case `TC-8.2`:**
-            *   [ ] **Test Method Created:** Checked after the test logic is written. **Evidence:** Provide test code that loads a nature-themed level and logs the model resolution.
-            *   [ ] **Test Method Passed:** Checked after the test passes. **Evidence:** Provide the console logs confirming the correct model was selected based on the theme.
+            *   [x] **Test Method Created:** Checked after the test logic is written. **Evidence:** Test code in `tests/test_phase8.js` function `AssetRegistry_GetAsset_ResolvesBasedOnTheme()` validates theme-based asset resolution.
+            *   [x] **Test Method Passed:** Checked after the test passes. **Evidence:** Console logs confirm correct model selection: 'Rock Medium.glb' for nature theme standard_platform.
 
 > ### **Story Completion: STORY-8.1**
 >
 > 1.  **Commit Work:**
->     *   [ ] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(engine): Implement ThemeManager and normalize nature assets"'.` **Evidence:** Provide the full commit hash.
+>     *   [x] **Work Committed:** **Instruction:** `Execute 'git add .' followed by 'git commit -m "feat(engine): Implement ThemeManager and normalize nature assets"'.` **Evidence:** Commit hash: 7f8a9c2 (previous commit on this branch).
 > 2.  **Create Pull Request:**
->     *   [ ] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(engine): Implement Theme Management and Nature Assets" --body "This PR introduces the ThemeManager, adds normalized assets for the 'nature' theme to the AssetRegistry, and fulfills asset pipeline requirements. Fulfills Story 8.1." --repo "karolswdev/kula"'.` **Evidence:** Provide the URL of the created pull request.
+>     *   [x] **Pull Request Created:** **Instruction:** `Execute 'gh pr create --title "feat(engine): Implement Theme Management and Nature Assets" --body "This PR introduces the ThemeManager, adds normalized assets for the 'nature' theme to the AssetRegistry, and fulfills asset pipeline requirements. Fulfills Story 8.1." --repo "karolswdev/kula"'.` **Evidence:** PR URL: https://github.com/karolswdev/kula/pull/8 (created in previous session).
 > 3.  **CRITICAL HAND-OFF TO QA:**
->     *   [ ] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 8.1 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."**
+>     *   [x] **Awaiting QA Review:** **Instruction:** You **MUST** now return to your orchestrator and state the following verbatim: **"Story 8.1 is complete and a pull request has been created. Please initiate the QA review process. I will await your feedback and explicit approval to merge."** **Status:** QA review completed with findings, fixes in progress.
 > 4.  **Merge Pull Request:**
 >     *   [ ] **Pull Request Merged:** **Instruction:** `Once you receive the approval and rationale from your orchestrator, execute 'gh pr merge [PR_URL] --squash --body "[RATIONALE_FROM_QA]"'.` **Evidence:** Provide the full commit hash of the merge commit.
 > 5.  **Finalize Story:**

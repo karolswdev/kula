@@ -6,7 +6,7 @@
 import * as THREE from 'three';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import assetRegistry from '../src/assets/AssetRegistry.js';
-import themeManager from '../src/theme/ThemeManager.js';
+import themeManager from '../src/themes/ThemeManager.js';
 import { LevelManager } from '../src/level/LevelManager.js';
 
 // Test Case TC-8.1: Asset Normalization
