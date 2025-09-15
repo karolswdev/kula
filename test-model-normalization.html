@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Model Normalization Test - TC-8.1</title>
+    <style>
+        body {
+            font-family: monospace;
+            margin: 20px;
+            background: #1a1a1a;
+            color: #00ff00;
+        }
+        h1 {
+            color: #00ff00;
+            border-bottom: 2px solid #00ff00;
+            padding-bottom: 10px;
+        }
+        .test-result {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #333;
+            background: #0a0a0a;
+        }
+        .pass {
+            border-color: #00ff00;
+            background: #001100;
+        }
+        .fail {
+            border-color: #ff0000;
+            background: #110000;
+        }
+        .model-info {
+            margin: 10px 0;
+            padding: 10px;
+            background: #111;
+            border-left: 3px solid #00ff00;
+        }
+        .dimension {
+            display: inline-block;
+            margin-right: 20px;
+            padding: 5px 10px;
+            background: #222;
+            border-radius: 3px;
+        }
+        #canvas {
+            border: 2px solid #00ff00;
+            display: block;
+            margin: 20px 0;
+        }
+        .summary {
+            margin-top: 30px;
+            padding: 20px;
+            background: #001100;
+            border: 2px solid #00ff00;
+        }
+        .error {
+            color: #ff0000;
+        }
+        .success {
+            color: #00ff00;
+        }
+        #screenshot-button {
+            padding: 10px 20px;
+            background: #00ff00;
+            color: #000;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TC-8.1: Asset Normalization Verification</h1>
+    <p>Testing that GLB models are properly normalized to grid units (4x4x4 Three.js units)</p>
+    
+    <canvas id="canvas" width="800" height="400"></canvas>
+    
+    <div id="test-results"></div>
+    
+    <div class="summary" id="summary" style="display:none;">
+        <h2>Test Summary</h2>
+        <p id="summary-text"></p>
+    </div>
+    
+    <button id="screenshot-button" style="display:none;">Save Screenshot Evidence</button>
+
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <script type="module">
+        import * as THREE from 'three';
+        import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+        
+        // Test configuration
+        const GRID_UNIT = 4.0; // Expected size in Three.js units
+        const TOLERANCE = 0.01; // Allow small floating point variations
+        
+        // Models to test (from AssetRegistry)
+        const testModels = [
+            { name: 'Rock Medium (standard_platform)', path: 'assets/Rock Medium.glb' },
+            { name: 'Cube Bricks (brick_wall)', path: 'assets/Cube Bricks.glb' },
+            { name: 'Coin', path: 'assets/Coin.glb' },
+            { name: 'Rock Small', path: 'assets/Rock Small.glb' },
+            { name: 'Tree Dead', path: 'assets/Tree Dead.glb' }
+        ];
+        
+        // Set up Three.js scene for visualization
+        const scene = new THREE.Scene();
+        scene.background = new THREE.Color(0x0a0a0a);
+        
+        const camera = new THREE.PerspectiveCamera(
+            45,
+            800 / 400,
+            0.1,
+            1000
+        );
+        camera.position.set(10, 10, 10);
+        camera.lookAt(0, 0, 0);
+        
+        const renderer = new THREE.WebGLRenderer({ 
+            canvas: document.getElementById('canvas'),
+            antialias: true,
+            preserveDrawingBuffer: true // For screenshots
+        });
+        renderer.setSize(800, 400);
+        
+        // Add lighting
+        const ambientLight = new THREE.AmbientLight(0xffffff, 0.6);
+        scene.add(ambientLight);
+        const directionalLight = new THREE.DirectionalLight(0xffffff, 0.4);
+        directionalLight.position.set(5, 10, 5);
+        scene.add(directionalLight);
+        
+        // Add grid helper to show scale
+        const gridHelper = new THREE.GridHelper(20, 5, 0x00ff00, 0x003300);
+        scene.add(gridHelper);
+        
+        // Add bounding box visualization
+        const boxGeometry = new THREE.BoxGeometry(GRID_UNIT, GRID_UNIT, GRID_UNIT);
+        const boxMaterial = new THREE.MeshBasicMaterial({ 
+            color: 0x00ff00, 
+            wireframe: true,
+            opacity: 0.3,
+            transparent: true
+        });
+        const gridUnitBox = new THREE.Mesh(boxGeometry, boxMaterial);
+        scene.add(gridUnitBox);
+        
+        // GLTFLoader
+        const loader = new GLTFLoader();
+        
+        // Test results container
+        const resultsDiv = document.getElementById('test-results');
+        let allTestsPassed = true;
+        let testResults = [];
+        
+        // Function to calculate bounding box
+        function calculateBoundingBox(object) {
+            const box = new THREE.Box3().setFromObject(object);
+            const size = new THREE.Vector3();
+            box.getSize(size);
+            return { box, size };
+        }
+        
+        // Function to check if dimensions match grid unit
+        function checkDimensions(size) {
+            const withinTolerance = (value) => 
+                Math.abs(value - GRID_UNIT) <= TOLERANCE;
+            
+            return {
+                x: withinTolerance(size.x),
+                y: withinTolerance(size.y),
+                z: withinTolerance(size.z),
+                allPass: withinTolerance(size.x) && 
+                         withinTolerance(size.y) && 
+                         withinTolerance(size.z)
+            };
+        }
+        
+        // Test each model
+        async function testModel(modelInfo, index) {
+            const resultDiv = document.createElement('div');
+            resultDiv.className = 'test-result';
+            
+            try {
+                const gltf = await new Promise((resolve, reject) => {
+                    loader.load(
+                        modelInfo.path,
+                        resolve,
+                        undefined,
+                        reject
+                    );
+                });
+                
+                // Clear previous model
+                scene.children.forEach(child => {
+                    if (child.userData.testModel) {
+                        scene.remove(child);
+                    }
+                });
+                
+                // Add model to scene
+                gltf.scene.userData.testModel = true;
+                scene.add(gltf.scene);
+                
+                // Calculate bounding box
+                const { box, size } = calculateBoundingBox(gltf.scene);
+                
+                // Check dimensions
+                const dimensionCheck = checkDimensions(size);
+                
+                // Generate result HTML
+                let html = `<h3>${modelInfo.name}</h3>`;
+                html += `<div class="model-info">`;
+                html += `<p><strong>File:</strong> ${modelInfo.path}</p>`;
+                html += `<p><strong>Measured Dimensions:</strong></p>`;
+                html += `<div>`;
+                html += `<span class="dimension">X: ${size.x.toFixed(3)}</span>`;
+                html += `<span class="dimension">Y: ${size.y.toFixed(3)}</span>`;
+                html += `<span class="dimension">Z: ${size.z.toFixed(3)}</span>`;
+                html += `</div>`;
+                html += `<p><strong>Expected:</strong> ${GRID_UNIT} x ${GRID_UNIT} x ${GRID_UNIT} units</p>`;
+                html += `<p><strong>Tolerance:</strong> ±${TOLERANCE}</p>`;
+                
+                if (dimensionCheck.allPass) {
+                    html += `<p class="success">✓ PASS: Model properly normalized to grid unit</p>`;
+                    resultDiv.classList.add('pass');
+                } else {
+                    html += `<p class="error">✗ FAIL: Model dimensions do not match grid unit</p>`;
+                    html += `<p class="error">Failed axes: `;
+                    if (!dimensionCheck.x) html += 'X ';
+                    if (!dimensionCheck.y) html += 'Y ';
+                    if (!dimensionCheck.z) html += 'Z ';
+                    html += `</p>`;
+                    resultDiv.classList.add('fail');
+                    allTestsPassed = false;
+                }
+                html += `</div>`;
+                
+                resultDiv.innerHTML = html;
+                
+                // Store result
+                testResults.push({
+                    model: modelInfo.name,
+                    path: modelInfo.path,
+                    dimensions: { x: size.x, y: size.y, z: size.z },
+                    passed: dimensionCheck.allPass
+                });
+                
+                // Render the scene with this model
+                renderer.render(scene, camera);
+                
+            } catch (error) {
+                resultDiv.innerHTML = `
+                    <h3>${modelInfo.name}</h3>
+                    <p class="error">✗ ERROR: Failed to load model</p>
+                    <p class="error">${error.message}</p>
+                `;
+                resultDiv.classList.add('fail');
+                allTestsPassed = false;
+                
+                testResults.push({
+                    model: modelInfo.name,
+                    path: modelInfo.path,
+                    error: error.message,
+                    passed: false
+                });
+            }
+            
+            resultsDiv.appendChild(resultDiv);
+        }
+        
+        // Run all tests
+        async function runTests() {
+            console.log('Starting TC-8.1: Asset Normalization Tests');
+            console.log('Expected grid unit size:', GRID_UNIT);
+            console.log('Tolerance:', TOLERANCE);
+            
+            for (let i = 0; i < testModels.length; i++) {
+                await testModel(testModels[i], i);
+                // Small delay between tests for visual clarity
+                await new Promise(resolve => setTimeout(resolve, 500));
+            }
+            
+            // Show summary
+            const summaryDiv = document.getElementById('summary');
+            const summaryText = document.getElementById('summary-text');
+            
+            const passedCount = testResults.filter(r => r.passed).length;
+            const failedCount = testResults.filter(r => !r.passed).length;
+            
+            summaryDiv.style.display = 'block';
+            
+            if (allTestsPassed) {
+                summaryText.innerHTML = `
+                    <span class="success">✓ ALL TESTS PASSED</span><br>
+                    ${passedCount}/${testModels.length} models properly normalized to grid units
+                `;
+            } else {
+                summaryText.innerHTML = `
+                    <span class="error">✗ TESTS FAILED</span><br>
+                    Passed: ${passedCount}/${testModels.length}<br>
+                    Failed: ${failedCount}/${testModels.length}
+                `;
+            }
+            
+            // Log detailed results to console
+            console.log('Test Results:', testResults);
+            
+            // Show screenshot button
+            document.getElementById('screenshot-button').style.display = 'block';
+            
+            // Render final scene
+            renderer.render(scene, camera);
+        }
+        
+        // Screenshot functionality
+        document.getElementById('screenshot-button').addEventListener('click', () => {
+            // Get canvas data
+            const canvas = document.getElementById('canvas');
+            const dataURL = canvas.toDataURL('image/png');
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.download = 'model-normalization-proof.png';
+            link.href = dataURL;
+            link.click();
+            
+            console.log('Screenshot saved. Move this to evidence/phase-8/story-8.1/');
+        });
+        
+        // Start tests
+        runTests();
+    </script>
+</body>
+</html>

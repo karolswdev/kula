@@ -26,12 +26,45 @@ class AssetRegistry {
     /**
      * Initialize definitions for the nature theme
      * Maps logical block types to their visual models and physics primitives
+     * Fulfills requirements: ARCH-007, PROD-016
      */
     initializeNatureTheme() {
         const natureDefinitions = new Map();
         
-        // Standard platform block in nature theme
-        natureDefinitions.set('standard', {
+        // Standard platform block - mapped to Rock Medium as per requirements
+        natureDefinitions.set('standard_platform', {
+            model: 'assets/Rock Medium.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [2, 2, 2] // Half-extents for CANNON.Box
+            },
+            gridFootprint: [1, 1, 1]
+        });
+        
+        // Brick wall block - mapped to Cube Bricks
+        natureDefinitions.set('brick_wall', {
+            model: 'assets/Cube Bricks.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [2, 2, 2] // Simplified box collider
+            },
+            gridFootprint: [1, 1, 1]
+        });
+        
+        // Decorative bush - non-collidable decoration
+        natureDefinitions.set('decorative_bush', {
+            model: 'assets/Bush.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [1, 1, 1], // Smaller collider for decoration
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Stone platform block
+        natureDefinitions.set('stone_platform', {
             model: 'assets/Stone Platform.glb',
             physics: {
                 shape: 'Box',
@@ -40,29 +73,9 @@ class AssetRegistry {
             gridFootprint: [1, 1, 1]
         });
         
-        // Rock platform variant
-        natureDefinitions.set('nature_rock_platform', {
-            model: 'assets/Rock Medium.glb',
-            physics: {
-                shape: 'Box',
-                dimensions: [2, 2, 2] // Simplified box collider for complex rock model
-            },
-            gridFootprint: [1, 1, 1]
-        });
-        
-        // Large rock variant
-        natureDefinitions.set('nature_rock_large', {
-            model: 'assets/Rock Large.glb',
-            physics: {
-                shape: 'Box',
-                dimensions: [4, 2, 4] // Larger footprint
-            },
-            gridFootprint: [2, 1, 2]
-        });
-        
-        // Brick cube variant
-        natureDefinitions.set('brick_cube', {
-            model: 'assets/Cube Bricks.glb',
+        // Grass platform
+        natureDefinitions.set('grass_platform', {
+            model: 'assets/Grass Platform.glb',
             physics: {
                 shape: 'Box',
                 dimensions: [2, 2, 2]
@@ -70,8 +83,8 @@ class AssetRegistry {
             gridFootprint: [1, 1, 1]
         });
         
-        // Hazard spike trap
-        natureDefinitions.set('hazard_spike', {
+        // Hazard - spike trap
+        natureDefinitions.set('hazard', {
             model: 'assets/Hazard Spike Trap.glb',
             physics: {
                 shape: 'Box',
@@ -81,6 +94,155 @@ class AssetRegistry {
             gridFootprint: [1, 1, 1],
             behavior: 'hazard'
         });
+        
+        // Tree decoration (standard tree) - mapped to Tree.glb
+        natureDefinitions.set('tree', {
+            model: 'assets/Tree.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [1, 4, 1], // Tall collider for tree trunk
+            },
+            gridFootprint: [1, 2, 1],
+            behavior: 'decoration'
+        });
+        
+        // Pine tree decoration variant - mapped to Pine Tree.glb
+        natureDefinitions.set('pine_tree', {
+            model: 'assets/Pine Tree.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [1, 4, 1], // Tall collider for pine tree
+            },
+            gridFootprint: [1, 2, 1],
+            behavior: 'decoration'
+        });
+        
+        // Fern decoration - mapped to Fern.glb
+        natureDefinitions.set('fern', {
+            model: 'assets/Fern.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.5, 0.5], // Small collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Flower decoration - mapped to Flower Single.glb
+        natureDefinitions.set('flower', {
+            model: 'assets/Flower Single.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.5, 0.5], // Small collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Mushroom decoration - mapped to Mushroom.glb
+        natureDefinitions.set('mushroom', {
+            model: 'assets/Mushroom.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.5, 0.5], // Small collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Flower decoration
+        natureDefinitions.set('flower_decoration', {
+            model: 'assets/Flower Single.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.5, 0.5], // Small collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Tree decoration (standard tree)
+        natureDefinitions.set('tree_decoration', {
+            model: 'assets/Tree.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [1, 4, 1], // Tall collider for tree trunk
+            },
+            gridFootprint: [1, 2, 1],
+            behavior: 'decoration'
+        });
+        
+        // Pine tree decoration variant
+        natureDefinitions.set('pine_tree_decoration', {
+            model: 'assets/Pine Tree.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [1, 4, 1], // Tall collider for pine tree
+            },
+            gridFootprint: [1, 2, 1],
+            behavior: 'decoration'
+        });
+        
+        // Fern decoration
+        natureDefinitions.set('fern_decoration', {
+            model: 'assets/Fern.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.5, 0.5], // Small collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Mushroom decoration
+        natureDefinitions.set('mushroom_decoration', {
+            model: 'assets/Mushroom.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.5, 0.5], // Small collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Grass decoration
+        natureDefinitions.set('grass_decoration', {
+            model: 'assets/Grass.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [0.5, 0.3, 0.5], // Very low collider
+                isTrigger: true // Non-blocking decoration
+            },
+            gridFootprint: [1, 1, 1],
+            behavior: 'decoration'
+        });
+        
+        // Keep legacy mappings for backwards compatibility
+        natureDefinitions.set('standard', natureDefinitions.get('standard_platform'));
+        natureDefinitions.set('nature_rock_platform', natureDefinitions.get('decorative_rock'));
+        natureDefinitions.set('nature_rock_large', {
+            model: 'assets/Rock Large.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [4, 2, 4] // Larger footprint
+            },
+            gridFootprint: [2, 1, 2]
+        });
+        natureDefinitions.set('brick_cube', {
+            model: 'assets/Cube Bricks.glb',
+            physics: {
+                shape: 'Box',
+                dimensions: [2, 2, 2]
+            },
+            gridFootprint: [1, 1, 1]
+        });
+        natureDefinitions.set('hazard_spike', natureDefinitions.get('hazard'));
         
         this.themes.set('nature', natureDefinitions);
     }
@@ -166,6 +328,15 @@ class AssetRegistry {
     getAvailableBlockTypes() {
         const themeDefinitions = this.themes.get(this.currentTheme);
         return themeDefinitions ? Array.from(themeDefinitions.keys()) : [];
+    }
+    
+    /**
+     * Get theme definitions for testing and inspection
+     * @param {string} themeName - The name of the theme
+     * @returns {Map|null} The theme definitions map
+     */
+    getThemeDefinitions(themeName) {
+        return this.themes.get(themeName);
     }
 }
 

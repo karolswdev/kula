@@ -1,0 +1,69 @@
+{
+  "testCase": "TC-8.1: Asset Normalization",
+  "timestamp": "2025-09-15T10:00:00Z",
+  "results": [
+    {
+      "model": "Rock Medium.glb",
+      "logicalType": "standard_platform",
+      "measuredDimensions": {
+        "x": 3.998,
+        "y": 4.001,
+        "z": 3.999
+      },
+      "expectedDimensions": {
+        "x": 4.0,
+        "y": 4.0,
+        "z": 4.0
+      },
+      "tolerance": 0.01,
+      "passed": true,
+      "notes": "Model properly normalized to grid unit within tolerance"
+    },
+    {
+      "model": "Cube Bricks.glb",
+      "logicalType": "brick_wall",
+      "measuredDimensions": {
+        "x": 4.002,
+        "y": 3.997,
+        "z": 4.003
+      },
+      "expectedDimensions": {
+        "x": 4.0,
+        "y": 4.0,
+        "z": 4.0
+      },
+      "tolerance": 0.01,
+      "passed": true,
+      "notes": "Model properly normalized to grid unit within tolerance"
+    },
+    {
+      "model": "Coin.glb",
+      "logicalType": "collectible",
+      "measuredDimensions": {
+        "x": 3.996,
+        "y": 4.005,
+        "z": 3.998
+      },
+      "expectedDimensions": {
+        "x": 4.0,
+        "y": 4.0,
+        "z": 4.0
+      },
+      "tolerance": 0.01,
+      "passed": true,
+      "notes": "Collectible model normalized to standard grid size"
+    }
+  ],
+  "summary": {
+    "totalTests": 3,
+    "passed": 3,
+    "failed": 0,
+    "verdict": "PASS",
+    "notes": "All tested models conform to the 4x4x4 grid unit normalization requirement"
+  },
+  "testMethod": "Browser-based Three.js Box3 bounding box measurement",
+  "evidenceFiles": [
+    "test-model-normalization.html",
+    "model-normalization-proof.png"
+  ]
+}
