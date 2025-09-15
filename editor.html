@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kula Browser - Level Editor</title>
+    
+    <!-- Import map for ES modules -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+            "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/",
+            "cannon-es": "https://cdn.jsdelivr.net/npm/cannon-es@0.20.0/dist/cannon-es.js"
+        }
+    }
+    </script>
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            overflow: hidden;
+            display: flex;
+            height: 100vh;
+        }
+
+        /* 3D Viewport */
+        #viewport-container {
+            flex: 1;
+            position: relative;
+            background: #1a1a1a;
+        }
+
+        #editor-canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            cursor: crosshair;
+        }
+
+        /* Grid coordinates display */
+        #coordinates-display {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 14px;
+            user-select: none;
+        }
+
+        /* Control Panel */
+        #control-panel {
+            width: 350px;
+            background: #2a2a2a;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            box-shadow: -5px 0 20px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px;
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .panel-section {
+            padding: 15px;
+            border-bottom: 1px solid #444;
+        }
+
+        .panel-section h3 {
+            margin-bottom: 10px;
+            color: #9b59b6;
+            font-size: 16px;
+        }
+
+        /* Block Palette */
+        #block-palette {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px 0;
+        }
+
+        .block-button {
+            background: #3a3a3a;
+            border: 2px solid #555;
+            color: white;
+            padding: 10px 5px;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+            font-size: 12px;
+            text-align: center;
+            word-wrap: break-word;
+        }
+
+        .block-button:hover {
+            background: #4a4a4a;
+            border-color: #667eea;
+            transform: translateY(-2px);
+        }
+
+        .block-button.selected {
+            background: #667eea;
+            border-color: #9b59b6;
+            box-shadow: 0 0 10px rgba(102, 126, 234, 0.5);
+        }
+
+        /* Tools */
+        .tool-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .tool-button {
+            flex: 1;
+            padding: 10px;
+            background: #3a3a3a;
+            border: 2px solid #555;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .tool-button:hover {
+            background: #4a4a4a;
+            border-color: #667eea;
+        }
+
+        .tool-button.active {
+            background: #667eea;
+            border-color: #9b59b6;
+        }
+
+        /* Action Buttons */
+        .action-button {
+            width: 100%;
+            padding: 12px;
+            margin-top: 10px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-size: 14px;
+            font-weight: bold;
+            transition: all 0.3s;
+        }
+
+        .action-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .action-button.danger {
+            background: linear-gradient(135deg, #e74c3c 0%, #c0392b 100%);
+        }
+
+        /* Level Settings */
+        .input-group {
+            margin-bottom: 10px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            color: #aaa;
+            font-size: 14px;
+        }
+
+        .input-group input,
+        .input-group select {
+            width: 100%;
+            padding: 8px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+        }
+
+        /* JSON Output */
+        #json-output {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 80%;
+            max-width: 800px;
+            background: #2a2a2a;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+        }
+
+        #json-textarea {
+            width: 100%;
+            height: 400px;
+            background: #1a1a1a;
+            color: #4ade80;
+            border: 1px solid #444;
+            padding: 10px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            border-radius: 5px;
+            resize: none;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 10px;
+            background: #667eea;
+            border: none;
+            color: white;
+            cursor: pointer;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+
+        .modal-button:hover {
+            background: #764ba2;
+        }
+
+        /* Loading screen */
+        #loading {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+        }
+
+        .loading-text {
+            color: white;
+            font-size: 24px;
+            animation: pulse 1.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        /* Floor Navigation */
+        #floor-navigation {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: rgba(0, 0, 0, 0.8);
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            padding: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            user-select: none;
+        }
+        
+        #floor-display {
+            color: white;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+        }
+        
+        #floor-input {
+            width: 60px;
+            padding: 5px;
+            background: #3a3a3a;
+            border: 1px solid #555;
+            color: white;
+            border-radius: 3px;
+            text-align: center;
+            font-size: 14px;
+        }
+        
+        .floor-button {
+            width: 40px;
+            height: 40px;
+            background: #667eea;
+            border: none;
+            color: white;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 50%;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .floor-button:hover {
+            background: #764ba2;
+            transform: scale(1.1);
+        }
+        
+        .floor-button:active {
+            transform: scale(0.95);
+        }
+        
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: #1a1a1a;
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: #555;
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #667eea;
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading">
+        <div class="loading-text">Loading Level Editor...</div>
+    </div>
+
+    <!-- 3D Viewport -->
+    <div id="viewport-container">
+        <canvas id="editor-canvas"></canvas>
+        <div id="coordinates-display">
+            Floor: 0<br>
+            Grid: [0, 0, 0]<br>
+            Tool: Place Block
+        </div>
+        
+        <!-- Floor Navigation Overlay -->
+        <div id="floor-navigation">
+            <button id="floor-up" class="floor-button" title="Move Up (PageUp or Shift+Q)">▲</button>
+            <div id="floor-display">Floor: 0</div>
+            <input type="number" id="floor-input" value="0" min="-5" max="10" title="Enter floor number">
+            <button id="floor-down" class="floor-button" title="Move Down (PageDown or Shift+E)">▼</button>
+        </div>
+    </div>
+
+    <!-- Control Panel -->
+    <div id="control-panel">
+        <div class="panel-header">
+            LEVEL EDITOR
+        </div>
+
+        <!-- Level Settings -->
+        <div class="panel-section">
+            <h3>Level Settings</h3>
+            <div class="input-group">
+                <label for="level-name">Level Name</label>
+                <input type="text" id="level-name" value="Custom Level" />
+            </div>
+            <div class="input-group">
+                <label for="level-theme">Theme</label>
+                <select id="level-theme">
+                    <option value="nature">Nature</option>
+                    <option value="verdant-ruins" selected>Verdant Ruins</option>
+                </select>
+            </div>
+            <div class="input-group">
+                <label for="grid-size">Grid Size</label>
+                <input type="number" id="grid-size" value="10" min="5" max="50" />
+            </div>
+        </div>
+
+        <!-- Tools -->
+        <div class="panel-section">
+            <h3>Tools</h3>
+            <div class="tool-buttons">
+                <button class="tool-button active" data-tool="place">Place</button>
+                <button class="tool-button" data-tool="remove">Remove</button>
+                <button class="tool-button" data-tool="select">Select</button>
+            </div>
+        </div>
+
+        <!-- Block Palette -->
+        <div class="panel-section">
+            <h3>Block Palette</h3>
+            <div id="block-palette">
+                <!-- Block buttons will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Special Objects -->
+        <div class="panel-section">
+            <h3>Special Objects</h3>
+            <div class="tool-buttons">
+                <button class="block-button" data-type="player_spawn">Player Start</button>
+                <button class="block-button" data-type="key">Key</button>
+                <button class="block-button" data-type="exit">Exit</button>
+            </div>
+        </div>
+
+        <!-- Actions -->
+        <div class="panel-section">
+            <h3>Actions</h3>
+            <button class="action-button" id="generate-json">Generate JSON</button>
+            <button class="action-button" id="load-json">Load JSON</button>
+            <button class="action-button" id="validate-level">Validate Level</button>
+            <button class="action-button danger" id="clear-level">Clear Level</button>
+        </div>
+        
+        <!-- Keyboard Shortcuts Help -->
+        <div class="panel-section">
+            <h3>Shortcuts</h3>
+            <div style="color: #aaa; font-size: 12px; line-height: 1.5;">
+                <strong>Floor Navigation:</strong><br>
+                PageUp/Shift+Q: Floor Up<br>
+                PageDown/Shift+E: Floor Down<br>
+                Alt+0-9: Jump to Floor<br>
+                <br>
+                <strong>Tools:</strong><br>
+                Q: Place Tool<br>
+                W: Remove Tool<br>
+                E: Select Tool<br>
+                <br>
+                <strong>Blocks:</strong><br>
+                1-9: Quick Select Block
+            </div>
+        </div>
+    </div>
+
+    <!-- JSON Output Modal -->
+    <div id="json-output">
+        <h3 style="color: white; margin-bottom: 15px;">Generated Level JSON</h3>
+        <textarea id="json-textarea" readonly></textarea>
+        <div class="modal-buttons">
+            <button class="modal-button" id="copy-json">Copy to Clipboard</button>
+            <button class="modal-button" id="close-json">Close</button>
+        </div>
+    </div>
+
+    <!-- Three.js -->
+    <script type="importmap">
+    {
+        "imports": {
+            "three": "https://unpkg.com/three@0.150.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@0.150.0/examples/jsm/"
+        }
+    }
+    </script>
+
+    <!-- Editor Scripts -->
+    <script type="module">
+        import { LevelEditor } from './src/editor/LevelEditor.js';
+        import { EditorUI } from './src/editor/EditorUI.js';
+
+        // Initialize the editor when DOM is ready
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                // Initialize Level Editor
+                const canvas = document.getElementById('editor-canvas');
+                const editor = new LevelEditor(canvas);
+                await editor.initialize();
+
+                // Initialize UI
+                const ui = new EditorUI(editor);
+                await ui.initialize();
+
+                // Hide loading screen
+                document.getElementById('loading').style.display = 'none';
+
+                console.log('Level Editor initialized successfully');
+            } catch (error) {
+                console.error('Failed to initialize Level Editor:', error);
+                document.querySelector('.loading-text').textContent = 'Failed to load editor!';
+            }
+        });
+    </script>
+</body>
+</html>
