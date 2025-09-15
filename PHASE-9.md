@@ -69,7 +69,7 @@ Here is the complete, actionable plan for Phase 9.
 
 ### **3. Implementation Plan (The Execution)**
 
-#### [ ] STORY-9.1: Architect the Core Behavior System
+#### [x] STORY-9.1: Architect the Core Behavior System
 
 1.  **Task:** Design the declarative behavior data structure.
     *   **Instruction:** `Update a level file (e.g., levels/grid-level-1.json) to include a "behaviors" array. Define the JSON schema for at least three behavior types: 'elevator', 'timed_disappear', and 'switch'. This schema will be the contract for the new system, as per PROD-015.`

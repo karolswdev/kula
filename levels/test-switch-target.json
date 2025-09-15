@@ -1,0 +1,89 @@
+{
+  "name": "Switch and Target Test",
+  "description": "Test level for TC-9.4: Switch and target behaviors",
+  "theme": "nature",
+  "gridUnitSize": 4,
+  "blocks": [
+    {
+      "type": "standard",
+      "at": [0, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [1, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [2, 0, 0],
+      "description": "Switch button"
+    },
+    {
+      "type": "standard",
+      "at": [3, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [4, 0, 0]
+    },
+    {
+      "type": "standard",
+      "at": [5, 0, 0]
+    },
+    {
+      "type": "nature_rock_platform",
+      "at": [5, 0, 1],
+      "description": "Door/Target block that moves when switch is pressed"
+    },
+    {
+      "type": "standard",
+      "at": [5, 0, 2]
+    },
+    {
+      "type": "standard",
+      "at": [6, 0, 0],
+      "description": "Goal platform behind door"
+    }
+  ],
+  "behaviors": [
+    {
+      "type": "switch",
+      "target": [2, 0, 0],
+      "config": {
+        "trigger": "onPlayerContact",
+        "targetBlock": [5, 0, 1],
+        "action": "activate",
+        "visual": "button",
+        "oneTime": true
+      }
+    },
+    {
+      "type": "target",
+      "target": [5, 0, 1],
+      "config": {
+        "actionType": "move",
+        "moveTarget": [20, -8, 4],
+        "moveSpeed": 2.0,
+        "toggleable": false
+      }
+    }
+  ],
+  "player": {
+    "spawn": [0, 1, 0],
+    "lives": 3
+  },
+  "objectives": {
+    "keys": [
+      {
+        "id": "key1",
+        "at": [6, 1, 0]
+      }
+    ],
+    "exit": {
+      "at": [6, 0, 0]
+    }
+  },
+  "camera": {
+    "position": [3, 8, 12],
+    "lookAt": [3, 0, 0]
+  }
+}

@@ -6,6 +6,12 @@
  * them to blocks at runtime, enabling dynamic, interactive puzzles.
  */
 
+import { ElevatorBehavior } from './ElevatorBehavior.js';
+import { TimedDisappearBehavior } from './TimedDisappearBehavior.js';
+import { SwitchBehavior } from './SwitchBehavior.js';
+import { TargetBehavior } from './TargetBehavior.js';
+import * as THREE from 'three';
+
 export class BehaviorSystem {
     constructor(scene, physicsManager) {
         this.scene = scene;
@@ -28,10 +34,11 @@ export class BehaviorSystem {
      * Requirement: ARCH-005 - Parse declarative behavior definitions from level data
      * @param {Object} levelData - The complete level data object
      * @param {Map} platforms - Map of platform/block meshes from LevelManager
+     * @param {Array} physicsBodies - Array of physics bodies corresponding to platforms
      */
-    parseBehaviors(levelData, platforms) {
+    parseBehaviors(levelData, platforms, physicsBodies = []) {
         // First, build a map of blocks by their grid positions
-        this.buildBlockPositionMap(platforms);
+        this.buildBlockPositionMap(platforms, physicsBodies);
         
         // Check if level has behaviors array
         if (!levelData.behaviors || !Array.isArray(levelData.behaviors)) {
@@ -52,15 +59,36 @@ export class BehaviorSystem {
     /**
      * Build a map of blocks indexed by their grid position
      * @param {Map} platforms - Map of platform/block meshes
+     * @param {Array} physicsBodies - Array of physics bodies
      */
-    buildBlockPositionMap(platforms) {
+    buildBlockPositionMap(platforms, physicsBodies) {
         this.blocksByPosition.clear();
+        
+        // Create a map to associate meshes with physics bodies by position
+        const physicsBodyMap = new Map();
+        physicsBodies.forEach(body => {
+            if (body && body.position) {
+                // Round position to nearest grid unit (4.0 units)
+                const gridX = Math.round(body.position.x / 4.0);
+                const gridY = Math.round(body.position.y / 4.0);
+                const gridZ = Math.round(body.position.z / 4.0);
+                const posKey = `${gridX},${gridY},${gridZ}`;
+                physicsBodyMap.set(posKey, body);
+            }
+        });
         
         platforms.forEach((mesh, key) => {
             if (mesh.userData && mesh.userData.gridPosition) {
                 const pos = mesh.userData.gridPosition;
                 const posKey = `${pos[0]},${pos[1]},${pos[2]}`;
                 this.blocksByPosition.set(posKey, mesh);
+                
+                // Try to find and attach the corresponding physics body
+                const physicsBody = physicsBodyMap.get(posKey);
+                if (physicsBody) {
+                    mesh.userData.physicsBody = physicsBody;
+                    console.log(`BehaviorSystem::buildBlockPositionMap - Linked physics body to block at [${pos[0]},${pos[1]},${pos[2]}]`);
+                }
                 
                 console.log(`BehaviorSystem::buildBlockPositionMap - Mapped block at [${pos[0]},${pos[1]},${pos[2]}] -> ${mesh.name}`);
             }
@@ -123,120 +151,21 @@ export class BehaviorSystem {
     createBehavior(type, targetBlock, config, behaviorId) {
         switch (type) {
             case 'elevator':
-                return this.createElevatorBehavior(targetBlock, config, behaviorId);
+                return new ElevatorBehavior(targetBlock, config, behaviorId, this.physicsManager);
             
             case 'timed_disappear':
-                return this.createTimedDisappearBehavior(targetBlock, config, behaviorId);
+                return new TimedDisappearBehavior(targetBlock, config, behaviorId, this.physicsManager);
             
             case 'switch':
-                return this.createSwitchBehavior(targetBlock, config, behaviorId);
+                return new SwitchBehavior(targetBlock, config, behaviorId, this);
+            
+            case 'target':
+                return new TargetBehavior(targetBlock, config, behaviorId, this.physicsManager);
             
             default:
                 console.warn(`BehaviorSystem::createBehavior - Unknown behavior type: ${type}`);
                 return null;
         }
-    }
-    
-    /**
-     * Create an elevator behavior
-     * @param {THREE.Mesh} targetBlock - Target block mesh
-     * @param {Object} config - Elevator configuration
-     * @param {string} behaviorId - Unique behavior ID
-     * @returns {Object} Elevator behavior instance
-     */
-    createElevatorBehavior(targetBlock, config, behaviorId) {
-        return {
-            id: behaviorId,
-            type: 'elevator',
-            targetBlock: targetBlock,
-            config: config,
-            state: {
-                isActive: false,
-                currentPosition: targetBlock.position.clone(),
-                startPosition: new THREE.Vector3(...(config.startPosition || [targetBlock.position.x, targetBlock.position.y, targetBlock.position.z])),
-                endPosition: new THREE.Vector3(...(config.endPosition || [targetBlock.position.x, targetBlock.position.y + 10, targetBlock.position.z])),
-                speed: config.speed || 2.0,
-                returnDelay: config.returnDelay || 3.0,
-                delayTimer: 0,
-                direction: 1 // 1 = moving to end, -1 = moving to start
-            },
-            update: function(deltaTime) {
-                // Elevator update logic will be implemented in Story 9.2
-                // For now, just a placeholder
-                if (this.state.isActive) {
-                    // Move between start and end positions
-                }
-            },
-            onPlayerContact: function() {
-                console.log(`Elevator behavior '${this.id}' triggered by player contact`);
-                this.state.isActive = true;
-            }
-        };
-    }
-    
-    /**
-     * Create a timed disappear behavior
-     * @param {THREE.Mesh} targetBlock - Target block mesh
-     * @param {Object} config - Timed disappear configuration
-     * @param {string} behaviorId - Unique behavior ID
-     * @returns {Object} Timed disappear behavior instance
-     */
-    createTimedDisappearBehavior(targetBlock, config, behaviorId) {
-        return {
-            id: behaviorId,
-            type: 'timed_disappear',
-            targetBlock: targetBlock,
-            config: config,
-            state: {
-                isVisible: true,
-                timer: 0,
-                interval: config.interval || 2.0,
-                visibleDuration: config.visibleDuration || 1.5,
-                invisibleDuration: config.invisibleDuration || 0.5
-            },
-            update: function(deltaTime) {
-                // Timed disappear update logic will be implemented in Story 9.2
-                // For now, just a placeholder
-                this.state.timer += deltaTime;
-                if (this.state.timer >= this.state.interval) {
-                    this.state.timer = 0;
-                    this.state.isVisible = !this.state.isVisible;
-                }
-            }
-        };
-    }
-    
-    /**
-     * Create a switch behavior
-     * @param {THREE.Mesh} targetBlock - Target block mesh
-     * @param {Object} config - Switch configuration
-     * @param {string} behaviorId - Unique behavior ID
-     * @returns {Object} Switch behavior instance
-     */
-    createSwitchBehavior(targetBlock, config, behaviorId) {
-        return {
-            id: behaviorId,
-            type: 'switch',
-            targetBlock: targetBlock,
-            config: config,
-            state: {
-                isActivated: false,
-                targetBlockPosition: config.targetBlock,
-                action: config.action || 'activate',
-                visual: config.visual || 'button'
-            },
-            update: function(deltaTime) {
-                // Switch update logic will be implemented in Story 9.2
-                // Visual feedback for switch state
-            },
-            onPlayerContact: function() {
-                if (!this.state.isActivated) {
-                    console.log(`Switch behavior '${this.id}' activated, triggering action '${this.state.action}' on target at [${this.state.targetBlockPosition}]`);
-                    this.state.isActivated = true;
-                    // Will trigger the target block's action in Story 9.2
-                }
-            }
-        };
     }
     
     /**
@@ -279,14 +208,23 @@ export class BehaviorSystem {
      */
     checkBehaviorTriggers(position, radius = 0.5) {
         this.behaviors.forEach(behavior => {
-            if (behavior.config.trigger === 'onPlayerContact' && behavior.targetBlock) {
+            if (behavior.config && behavior.config.trigger === 'onPlayerContact' && behavior.targetBlock) {
                 const distance = position.distanceTo(behavior.targetBlock.position);
                 const blockSize = behavior.targetBlock.geometry?.parameters?.width || 4;
                 
+                // Check if player is close enough to trigger
                 if (distance < radius + blockSize / 2) {
-                    if (behavior.onPlayerContact && !behavior.state.isTriggered) {
-                        behavior.onPlayerContact();
-                        behavior.state.isTriggered = true;
+                    // Check if player is on top of the block (for elevators)
+                    const yDiff = position.y - behavior.targetBlock.position.y;
+                    const isOnTop = yDiff > 0 && yDiff < 3; // Within reasonable range above block
+                    
+                    if (behavior.onPlayerContact) {
+                        // Different trigger conditions for different behaviors
+                        if (behavior.type === 'elevator' && isOnTop) {
+                            behavior.onPlayerContact();
+                        } else if (behavior.type === 'switch') {
+                            behavior.onPlayerContact();
+                        }
                     }
                 }
             }
