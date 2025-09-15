@@ -3,10 +3,13 @@
  * Requirements: ARCH-002 (Data-Driven Levels), ARCH-003 (Grid Coordinate System), PROD-004 (Key Collection), PROD-005 (Exit Portal), PROD-010 (Scoring), PROD-007 (Hazards), PROD-011 (Modular Blocks), PROD-013 (Universal 3D Grid)
  */
 
+import * as THREE from 'three';
+import * as CANNON from 'cannon-es';
 import { Coin } from '../entities/Coin.js';
 import { Hazard } from '../entities/Hazard.js';
 import { MovingPlatform } from '../entities/MovingPlatform.js';
 import assetRegistry from '../assets/AssetRegistry.js';
+import assetManager from '../assets/AssetManager.js';
 
 export class LevelManager {
     constructor(scene, physicsManager) {
@@ -99,9 +102,14 @@ export class LevelManager {
     async loadGridLevel() {
         console.log('LevelManager::loadGridLevel - Loading grid-based level');
         
-        // Process blocks
+        // Preload all required model assets for this level
         if (this.currentLevel.blocks) {
-            this.createGridBlocks(this.currentLevel.blocks);
+            await this.preloadLevelAssets(this.currentLevel.blocks);
+        }
+        
+        // Process blocks (now with preloaded assets)
+        if (this.currentLevel.blocks) {
+            await this.createGridBlocks(this.currentLevel.blocks);
         }
         
         // Process player spawn position (convert from grid to world)
@@ -211,18 +219,47 @@ export class LevelManager {
     }
     
     /**
-     * Create blocks from grid-based level data
-     * Requirement: PROD-013 - Universal 3D Grid, ARCH-004 - Asset Registry
+     * Preload all model assets required for the level
+     * Requirement: NFR-004 - Asset Loading & Instancing
+     * @param {Array} blocksData - Array of block definitions
      */
-    createGridBlocks(blocksData) {
+    async preloadLevelAssets(blocksData) {
+        console.log(`LevelManager::preloadLevelAssets - Analyzing ${blocksData.length} blocks for asset requirements`);
+        
+        // Collect unique model paths
+        const uniqueModelPaths = new Set();
+        
+        blocksData.forEach(blockData => {
+            const blockDef = assetRegistry.getBlockDefinition(blockData.type);
+            if (blockDef && blockDef.model) {
+                uniqueModelPaths.add(blockDef.model);
+            }
+        });
+        
+        console.log(`LevelManager::preloadLevelAssets - Found ${uniqueModelPaths.size} unique models to load`);
+        
+        // Preload all unique models
+        const modelPathsArray = Array.from(uniqueModelPaths);
+        await assetManager.preloadModels(modelPathsArray);
+        
+        console.log('LevelManager::preloadLevelAssets - All assets preloaded successfully');
+    }
+    
+    /**
+     * Create blocks from grid-based level data
+     * Requirement: PROD-013 - Universal 3D Grid, ARCH-004 - Asset Registry, NFR-004 - Asset Loading & Instancing
+     */
+    async createGridBlocks(blocksData) {
         console.log(`LevelManager::createGridBlocks - Creating ${blocksData.length} blocks`);
         
-        blocksData.forEach((blockData, index) => {
+        for (let index = 0; index < blocksData.length; index++) {
+            const blockData = blocksData[index];
+            
             // Get block definition from AssetRegistry
             const blockDef = assetRegistry.getBlockDefinition(blockData.type);
             if (!blockDef) {
                 console.warn(`LevelManager::createGridBlocks - Unknown block type: ${blockData.type}`);
-                return;
+                continue;
             }
             
             // Calculate world position from grid coordinates
@@ -231,25 +268,34 @@ export class LevelManager {
             // Log the grid to world transformation for testing
             console.log(`LevelManager::createGridBlocks - Block '${blockData.type}' at grid[${blockData.at}] -> world(${worldPos.x}, ${worldPos.y}, ${worldPos.z})`);
             
-            // Create placeholder mesh (will be replaced with actual model in STORY-7.2)
-            const geometry = new THREE.BoxGeometry(
-                this.gridUnitSize * 0.95, // Slightly smaller for visual gaps
-                this.gridUnitSize * 0.95,
-                this.gridUnitSize * 0.95
-            );
+            let mesh;
             
-            // Color based on block type for visual distinction
-            const color = blockData.type === 'nature_rock_platform' ? 0x808080 : 0x4080ff;
-            const material = new THREE.MeshStandardMaterial({
-                color: color,
-                roughness: 0.8,
-                metalness: 0.2
-            });
+            // Try to load actual .glb model from AssetManager
+            if (blockDef.model) {
+                const modelInstance = assetManager.getInstance(blockDef.model);
+                
+                if (modelInstance) {
+                    // Use the actual .glb model instance
+                    mesh = modelInstance;
+                    
+                    // Scale the model to fit the grid unit size if needed
+                    // Most models are designed to fit a 1x1x1 unit, scale to grid size
+                    const scaleFactor = this.gridUnitSize / 4; // Assuming models are designed for size 4
+                    mesh.scale.set(scaleFactor, scaleFactor, scaleFactor);
+                    
+                    console.log(`LevelManager::createGridBlocks - Using .glb model instance: ${blockDef.model}`);
+                } else {
+                    console.warn(`LevelManager::createGridBlocks - Model not loaded: ${blockDef.model}, using placeholder`);
+                    // Fall back to placeholder if model not loaded
+                    mesh = this.createPlaceholderBlock(blockData.type);
+                }
+            } else {
+                // No model specified, use placeholder
+                mesh = this.createPlaceholderBlock(blockData.type);
+            }
             
-            const mesh = new THREE.Mesh(geometry, material);
+            // Set position and properties
             mesh.position.copy(worldPos);
-            mesh.receiveShadow = true;
-            mesh.castShadow = true;
             mesh.name = `block-${blockData.type}-${index}`;
             mesh.userData = {
                 blockType: blockData.type,
@@ -264,11 +310,68 @@ export class LevelManager {
             
             // Create physics body using simplified shape from registry
             if (this.physicsManager && this.physicsManager.world) {
-                const physicsShape = assetRegistry.createPhysicsShape(blockDef.physics);
-                // Note: Actual physics body creation will be handled in later stories
-                console.log(`LevelManager::createGridBlocks - Would create physics shape: ${blockDef.physics.shape}`);
+                this.createBlockPhysicsBody(blockDef, worldPos, index);
             }
+        }
+    }
+    
+    /**
+     * Create a placeholder block mesh
+     * @param {string} blockType - The type of block
+     * @returns {THREE.Mesh} A placeholder mesh
+     */
+    createPlaceholderBlock(blockType) {
+        const geometry = new THREE.BoxGeometry(
+            this.gridUnitSize * 0.95, // Slightly smaller for visual gaps
+            this.gridUnitSize * 0.95,
+            this.gridUnitSize * 0.95
+        );
+        
+        // Color based on block type for visual distinction
+        const color = blockType === 'nature_rock_platform' ? 0x808080 : 0x4080ff;
+        const material = new THREE.MeshStandardMaterial({
+            color: color,
+            roughness: 0.8,
+            metalness: 0.2
         });
+        
+        const mesh = new THREE.Mesh(geometry, material);
+        mesh.receiveShadow = true;
+        mesh.castShadow = true;
+        
+        return mesh;
+    }
+    
+    /**
+     * Create physics body for a block using simplified colliders
+     * Requirement: ARCH-006 - Physics Optimization
+     * @param {Object} blockDef - Block definition from AssetRegistry
+     * @param {THREE.Vector3} worldPos - World position for the block
+     * @param {number} index - Block index
+     */
+    createBlockPhysicsBody(blockDef, worldPos, index) {
+        if (!blockDef.physics) return;
+        
+        // Create simplified physics shape from registry (Box primitive, not complex mesh)
+        const physicsShape = assetRegistry.createPhysicsShape(blockDef.physics);
+        
+        // Create static physics body
+        const body = new CANNON.Body({
+            mass: 0, // Static body
+            shape: physicsShape,
+            position: new CANNON.Vec3(worldPos.x, worldPos.y, worldPos.z),
+            type: CANNON.Body.STATIC,
+            material: this.physicsManager.groundMaterial
+        });
+        
+        // Add to physics world
+        this.physicsManager.world.addBody(body);
+        this.levelPhysicsBodies.push(body);
+        
+        // Log for test verification
+        console.log(`LevelManager::createBlockPhysicsBody - Created ${blockDef.physics.shape} physics body for block ${index}`);
+        console.log(`  Physics shape type: ${blockDef.physics.shape}`);
+        console.log(`  Position: (${worldPos.x}, ${worldPos.y}, ${worldPos.z})`);
     }
     
     /**
