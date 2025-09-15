@@ -945,13 +945,20 @@ export class LevelManager {
             console.log('LevelManager::completeLevel - Level Complete!');
             console.log(`LevelManager::completeLevel - Final score: ${this.gameState.keysCollected}/${this.gameState.totalKeys} keys`);
             
+            // Get current score from GameState if available
+            let currentScore = 0;
+            if (window.game && window.game.gameState) {
+                currentScore = window.game.gameState.score;
+            }
+            
             // Dispatch level complete event
             window.dispatchEvent(new CustomEvent('levelComplete', {
                 detail: {
                     levelId: this.currentLevel.id,
                     levelName: this.currentLevel.name,
                     keysCollected: this.gameState.keysCollected,
-                    totalKeys: this.gameState.totalKeys
+                    totalKeys: this.gameState.totalKeys,
+                    score: currentScore
                 }
             }));
             

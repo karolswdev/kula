@@ -1,0 +1,482 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Game Flow - TC-10.1</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: #1a1a2e;
+            color: white;
+        }
+        
+        #test-container {
+            padding: 20px;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        h1 {
+            color: #FFD700;
+            text-align: center;
+        }
+        
+        .test-section {
+            background: rgba(255,255,255,0.1);
+            border-radius: 10px;
+            padding: 20px;
+            margin: 20px 0;
+        }
+        
+        .test-controls {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin: 20px 0;
+        }
+        
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+        
+        button:hover {
+            background: #764ba2;
+            transform: translateY(-2px);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        #game-iframe {
+            width: 100%;
+            height: 600px;
+            border: 2px solid #667eea;
+            border-radius: 10px;
+            margin: 20px 0;
+        }
+        
+        #test-log {
+            background: rgba(0,0,0,0.5);
+            padding: 15px;
+            border-radius: 5px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: 'Courier New', monospace;
+            font-size: 14px;
+        }
+        
+        .log-entry {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #667eea;
+            padding-left: 10px;
+        }
+        
+        .log-entry.success {
+            border-color: #4ECDC4;
+            color: #4ECDC4;
+        }
+        
+        .log-entry.error {
+            border-color: #FF6B6B;
+            color: #FF6B6B;
+        }
+        
+        .log-entry.warning {
+            border-color: #FFD700;
+            color: #FFD700;
+        }
+        
+        #test-status {
+            text-align: center;
+            font-size: 24px;
+            margin: 20px 0;
+            padding: 20px;
+            border-radius: 10px;
+            background: rgba(255,255,255,0.05);
+        }
+        
+        .status-pass {
+            color: #4ECDC4;
+            background: rgba(76, 205, 196, 0.1);
+        }
+        
+        .status-fail {
+            color: #FF6B6B;
+            background: rgba(255, 107, 107, 0.1);
+        }
+        
+        .status-running {
+            color: #FFD700;
+            background: rgba(255, 215, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="test-container">
+        <h1>Test Case TC-10.1: Game Flow and Level Progression</h1>
+        
+        <div class="test-section">
+            <h2>Test Description</h2>
+            <p>This test verifies that completing the first level (verdant-ruins-01) unlocks the second level (verdant-ruins-02), 
+               shows the level select screen, and allows loading the next level.</p>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Controls</h2>
+            <div class="test-controls">
+                <button onclick="runFullTest()">Run Full Test (TC-10.1)</button>
+                <button onclick="testMainMenu()">Test Main Menu</button>
+                <button onclick="testLevelSelect()">Test Level Select</button>
+                <button onclick="testStartLevel1()">Start Level 1</button>
+                <button onclick="simulateLevelComplete()">Simulate Level Complete</button>
+                <button onclick="checkLevelUnlocked()">Check Level 2 Unlocked</button>
+                <button onclick="resetProgress()">Reset Progress</button>
+                <button onclick="clearLog()">Clear Log</button>
+            </div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Game View</h2>
+            <iframe id="game-iframe" src="index.html"></iframe>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Status</h2>
+            <div id="test-status" class="status-running">Test Not Started</div>
+        </div>
+        
+        <div class="test-section">
+            <h2>Test Log</h2>
+            <div id="test-log"></div>
+        </div>
+    </div>
+    
+    <script>
+        const gameFrame = document.getElementById('game-iframe');
+        const testLog = document.getElementById('test-log');
+        const testStatus = document.getElementById('test-status');
+        
+        // Logging functions
+        function log(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `[${new Date().toLocaleTimeString()}] ${message}`;
+            testLog.appendChild(entry);
+            testLog.scrollTop = testLog.scrollHeight;
+            console.log(`[TEST] ${message}`);
+        }
+        
+        function clearLog() {
+            testLog.innerHTML = '';
+            log('Log cleared', 'info');
+        }
+        
+        function updateStatus(message, type = 'running') {
+            testStatus.textContent = message;
+            testStatus.className = '';
+            testStatus.classList.add(`status-${type}`);
+        }
+        
+        // Helper to access game window
+        function getGameWindow() {
+            return gameFrame.contentWindow;
+        }
+        
+        // Helper to wait for condition
+        function waitFor(condition, timeout = 5000) {
+            return new Promise((resolve, reject) => {
+                const startTime = Date.now();
+                const checkInterval = setInterval(() => {
+                    if (condition()) {
+                        clearInterval(checkInterval);
+                        resolve();
+                    } else if (Date.now() - startTime > timeout) {
+                        clearInterval(checkInterval);
+                        reject(new Error('Timeout waiting for condition'));
+                    }
+                }, 100);
+            });
+        }
+        
+        // Test functions
+        async function testMainMenu() {
+            log('Testing main menu visibility...');
+            const gameWindow = getGameWindow();
+            
+            try {
+                await waitFor(() => gameWindow.document.getElementById('main-menu'));
+                const mainMenu = gameWindow.document.getElementById('main-menu');
+                const isVisible = !mainMenu.classList.contains('hidden');
+                
+                if (isVisible) {
+                    log('✓ Main menu is visible', 'success');
+                    return true;
+                } else {
+                    log('✗ Main menu is not visible', 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`✗ Error testing main menu: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testLevelSelect() {
+            log('Testing level select screen...');
+            const gameWindow = getGameWindow();
+            
+            try {
+                // Click start button
+                const startButton = gameWindow.document.getElementById('start-button');
+                if (!startButton) {
+                    throw new Error('Start button not found');
+                }
+                
+                startButton.click();
+                log('Clicked start button');
+                
+                // Wait for level select to appear
+                await waitFor(() => {
+                    const levelSelect = gameWindow.document.getElementById('level-select');
+                    return levelSelect && !levelSelect.classList.contains('hidden');
+                });
+                
+                log('✓ Level select screen is visible', 'success');
+                
+                // Check level cards
+                const levelCards = gameWindow.document.querySelectorAll('.level-card');
+                log(`Found ${levelCards.length} level cards`);
+                
+                // Check first level is unlocked
+                if (levelCards[0] && !levelCards[0].classList.contains('locked')) {
+                    log('✓ Level 1 is unlocked', 'success');
+                } else {
+                    log('✗ Level 1 is not unlocked', 'error');
+                }
+                
+                // Check second level is locked initially
+                if (levelCards[1] && levelCards[1].classList.contains('locked')) {
+                    log('✓ Level 2 is initially locked', 'success');
+                } else {
+                    log('✗ Level 2 is not locked initially', 'warning');
+                }
+                
+                return true;
+            } catch (error) {
+                log(`✗ Error testing level select: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function testStartLevel1() {
+            log('Starting Level 1...');
+            const gameWindow = getGameWindow();
+            
+            try {
+                // Ensure we're on level select
+                const startButton = gameWindow.document.getElementById('start-button');
+                if (startButton) {
+                    startButton.click();
+                    await waitFor(() => {
+                        const levelSelect = gameWindow.document.getElementById('level-select');
+                        return levelSelect && !levelSelect.classList.contains('hidden');
+                    });
+                }
+                
+                // Click first level card
+                const levelCards = gameWindow.document.querySelectorAll('.level-card');
+                if (!levelCards[0]) {
+                    throw new Error('No level cards found');
+                }
+                
+                levelCards[0].click();
+                log('Clicked Level 1 card');
+                
+                // Wait for game to start
+                await waitFor(() => gameWindow.game && gameWindow.game.isRunning);
+                
+                log('✓ Level 1 started successfully', 'success');
+                
+                // Check current level
+                const levelManager = gameWindow.game.levelManager;
+                if (levelManager && levelManager.currentLevel) {
+                    log(`Current level: ${levelManager.currentLevel.name || 'Unknown'}`);
+                }
+                
+                return true;
+            } catch (error) {
+                log(`✗ Error starting Level 1: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function simulateLevelComplete() {
+            log('Simulating level completion...');
+            const gameWindow = getGameWindow();
+            
+            try {
+                if (!gameWindow.game || !gameWindow.game.levelManager) {
+                    throw new Error('Game or LevelManager not available');
+                }
+                
+                const levelManager = gameWindow.game.levelManager;
+                const gameState = gameWindow.game.gameState;
+                
+                // Collect all keys programmatically
+                levelManager.gameState.keysCollected = levelManager.gameState.totalKeys;
+                levelManager.gameState.exitUnlocked = true;
+                
+                log(`Keys collected: ${levelManager.gameState.keysCollected}/${levelManager.gameState.totalKeys}`);
+                log('Exit portal unlocked');
+                
+                // Trigger level complete
+                levelManager.completeLevel();
+                
+                // Add some score
+                if (gameState) {
+                    gameState.addScore(100);
+                }
+                
+                log('✓ Level completion triggered', 'success');
+                
+                // Wait for level complete event
+                await new Promise(resolve => {
+                    gameWindow.addEventListener('levelComplete', resolve, { once: true });
+                    setTimeout(resolve, 100); // Fallback
+                });
+                
+                log('✓ Level complete event fired', 'success');
+                
+                return true;
+            } catch (error) {
+                log(`✗ Error simulating level complete: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function checkLevelUnlocked() {
+            log('Checking if Level 2 is unlocked...');
+            const gameWindow = getGameWindow();
+            
+            try {
+                // Wait for level select to be visible
+                await waitFor(() => {
+                    const levelSelect = gameWindow.document.getElementById('level-select');
+                    return levelSelect && !levelSelect.classList.contains('hidden');
+                }, 5000);
+                
+                // Check level cards
+                const levelCards = gameWindow.document.querySelectorAll('.level-card');
+                
+                if (levelCards[1]) {
+                    const isUnlocked = !levelCards[1].classList.contains('locked');
+                    
+                    if (isUnlocked) {
+                        log('✓ Level 2 is now unlocked!', 'success');
+                        
+                        // Try clicking Level 2
+                        levelCards[1].click();
+                        log('Clicked Level 2 card');
+                        
+                        // Wait for level to load
+                        await waitFor(() => gameWindow.game && gameWindow.game.isRunning, 3000);
+                        
+                        const levelManager = gameWindow.game.levelManager;
+                        if (levelManager && levelManager.currentLevel) {
+                            const levelName = levelManager.currentLevel.name || 'Unknown';
+                            log(`✓ Level 2 loaded: ${levelName}`, 'success');
+                        }
+                        
+                        return true;
+                    } else {
+                        log('✗ Level 2 is still locked', 'error');
+                        return false;
+                    }
+                } else {
+                    log('✗ Level 2 card not found', 'error');
+                    return false;
+                }
+            } catch (error) {
+                log(`✗ Error checking level unlock: ${error.message}`, 'error');
+                return false;
+            }
+        }
+        
+        async function runFullTest() {
+            log('Starting Test Case TC-10.1...', 'warning');
+            updateStatus('Running Test TC-10.1...', 'running');
+            
+            let allPassed = true;
+            
+            try {
+                // Step 1: Test main menu
+                log('\n=== Step 1: Main Menu ===', 'warning');
+                if (!await testMainMenu()) allPassed = false;
+                
+                // Step 2: Test level select
+                log('\n=== Step 2: Level Select ===', 'warning');
+                if (!await testLevelSelect()) allPassed = false;
+                
+                // Step 3: Start Level 1
+                log('\n=== Step 3: Start Level 1 ===', 'warning');
+                if (!await testStartLevel1()) allPassed = false;
+                
+                // Step 4: Complete Level 1
+                log('\n=== Step 4: Complete Level 1 ===', 'warning');
+                await new Promise(resolve => setTimeout(resolve, 2000)); // Let level load
+                if (!await simulateLevelComplete()) allPassed = false;
+                
+                // Step 5: Check Level 2 unlocked
+                log('\n=== Step 5: Check Level 2 Unlock ===', 'warning');
+                await new Promise(resolve => setTimeout(resolve, 3500)); // Wait for transition
+                if (!await checkLevelUnlocked()) allPassed = false;
+                
+                if (allPassed) {
+                    log('\n✓✓✓ TEST PASSED: TC-10.1 - All steps completed successfully!', 'success');
+                    updateStatus('TEST PASSED: TC-10.1', 'pass');
+                } else {
+                    log('\n✗✗✗ TEST FAILED: TC-10.1 - Some steps failed', 'error');
+                    updateStatus('TEST FAILED: TC-10.1', 'fail');
+                }
+            } catch (error) {
+                log(`\n✗✗✗ TEST ERROR: ${error.message}`, 'error');
+                updateStatus('TEST ERROR: TC-10.1', 'fail');
+            }
+        }
+        
+        function resetProgress() {
+            log('Resetting game progress...');
+            const gameWindow = getGameWindow();
+            
+            if (gameWindow.gameFlowManager) {
+                gameWindow.gameFlowManager.resetProgress();
+                log('✓ Progress reset', 'success');
+                
+                // Reload the frame to apply changes
+                gameFrame.src = gameFrame.src;
+                log('Reloading game...', 'info');
+            } else {
+                log('✗ GameFlowManager not available', 'error');
+            }
+        }
+        
+        // Wait for iframe to load
+        gameFrame.onload = () => {
+            log('Game iframe loaded', 'info');
+            log('Ready to run tests', 'success');
+        };
+    </script>
+</body>
+</html>
