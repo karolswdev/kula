@@ -3,6 +3,8 @@
  * Requirement: PROD-007 - Failure Condition: Hazards
  */
 
+import * as CANNON from 'cannon-es';
+
 export class Hazard {
     /**
      * Create a new hazard entity

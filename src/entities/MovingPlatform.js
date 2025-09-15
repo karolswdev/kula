@@ -3,6 +3,8 @@
  * Requirement: PROD-011 - Level Structure: Modular Blocks
  */
 
+import * as CANNON from 'cannon-es';
+
 export class MovingPlatform {
     /**
      * Create a new moving platform

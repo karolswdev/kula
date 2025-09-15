@@ -3,6 +3,8 @@
  * Requirements: USER-001, PROD-002, PROD-003, NFR-002
  */
 
+import * as CANNON from 'cannon-es';
+
 export class PlayerController {
     constructor() {
         // Input state tracking
